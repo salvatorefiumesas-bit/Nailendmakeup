@@ -115,6 +115,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .inst{background:var(--surf);border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:18px;padding:14px 16px;margin:12px 0 0;box-shadow:var(--sh);font-size:15px}
 .inst p{margin:0}.inst .it{display:block;margin-bottom:2px;font:500 19px "Bodoni Moda",Georgia,serif;color:var(--head)}
 .inst .cta{margin:10px 0 0;padding:12px;font-size:15px}.inst .link{display:block;margin:2px auto 0;font-size:14px}
+#cBar{flex-wrap:wrap;gap:0 14px}#cBar>span:last-child{display:flex;gap:14px;flex-wrap:wrap}
 .top{display:flex;justify-content:space-between;align-items:center;padding-top:20px}
 .foot{text-align:center;margin:44px 0 0;font-size:13px}.foot a{color:var(--mute)}
 [hidden]{display:none!important}
@@ -125,8 +126,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 <div class="wrap">
 
 <main id="clienti">
+ <div class="top" id="cBar"><span class="hint" id="cChi" style="margin:0"></span><span><button class="link" id="cMie" hidden>Le mie prenotazioni</button><button class="link" id="cBtn">Accedi con Google</button></span></div>
  <div id="prenota">
-  <div class="top" id="cBar"><span class="hint" id="cChi" style="margin:0"></span><button class="link" id="cBtn">Accedi con Google</button></div>
   <header class="hero">
    <div><span class="eyebrow">Prenotazioni online</span><h1>Nails &amp; Makeup</h1><p>Scegli il servizio e il giorno: ti aspettiamo.</p></div>
    <div class="caps" aria-hidden="true"><i style="--c:#E8A0B4;height:46px"></i><i style="--c:#C96A8E;height:62px"></i><i style="--c:#9B4F7A;height:54px"></i><i style="--c:#D9B77E;height:72px"></i></div>
@@ -153,7 +154,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <div class="ok" aria-hidden="true">✓</div>
   <h2 id="grazieTit">Appuntamento confermato</h2>
   <p id="grazieTxt"></p>
+  <p>Puoi vedere o annullare le tue prenotazioni da “Le mie prenotazioni”, in alto.</p>
   <button class="link" id="btnAltro">Prenota un altro appuntamento</button>
+ </div>
+<div id="mie" hidden>
+  <header class="hero"><div><h1>Le mie prenotazioni</h1></div></header>
+  <div id="mieLista" style="margin-top:18px"></div>
+  <button class="cta" id="mieNuova">Nuova prenotazione</button>
  </div>
 <p class="foot"><a href="#gestione">Area riservata</a></p>
 </main>
@@ -178,7 +185,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import{getFirestore,collection,doc,getDoc,onSnapshot,writeBatch}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyCWxiJSuggbxSATuSAxaxNsm6B5l_8ldcQ',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
 const SV=[
@@ -192,7 +199,7 @@ const SV=[
 const FLAT={};
 (function reg(list,c){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc);else{o.c=cc;o.l=o.l||o.n;FLAT[o.id]=o;}});})(SV,'#C96A8E');
 const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
-let B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
+let B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
 const erroreSalva=()=>alert('Salvataggio non riuscito: controlla la connessione e riprova.');
 async function crea(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});await bt.commit();}
@@ -357,7 +364,7 @@ function renderLista(){
  let out=`<p class="hint">${gA?dataLunga(gA)+'. Tocca di nuovo il giorno per vedere tutto il mese.':'Appuntamenti di '+mese+'. Tocca un giorno per vedere solo quello.'}</p>`;
  const qd=b=>new Date(b.id).toLocaleString('it-IT',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
  const x=b=>b.annullato?`<button class="x" data-act="rimuovi" data-id="${b.id}">Rimuovi</button>`:`<div class="az">${b.data?`<button class="x" data-act="sposta" data-id="${b.id}">Sposta</button>`:''}<button class="x" data-act="annulla" data-id="${b.id}">Cancella</button></div>`;
- const st=b=>b.annullato?`<small class="stato">${b.tipo==='richiesta'?'Richiesta cancellata':'Appuntamento cancellato'}</small>`:b.spostato?'<small class="stato">Appuntamento spostato</small>':'';
+ const st=b=>b.annullato?`<small class="stato">${b.tipo==='richiesta'?'Richiesta cancellata':'Appuntamento cancellato'}${b.annullatoDa==='cliente'?' dalla cliente':''}</small>`:b.spostato?'<small class="stato">Appuntamento spostato</small>':'';
  if(rq.length){out+='<div class="gd">Richieste trucco da concordare</div>';
   rq.forEach(b=>{out+=`<div class="app${b.annullato?' ann':''}"><div><b>${esc(b.nome)} ${esc(b.cogn)}</b>${st(b)}<small>${esc(b.sv)}, circa ${fd(b.dur)}</small><small>Quando: ${esc(b.note)}</small>${contatti(b)}<small>${esc(b.mail)}</small><small>Richiesta il ${qd(b)}</small></div>${x(b)}</div>`;});}
  if(!ap.length)out+=`<p class="hint">${gA?'Nessun appuntamento in questo giorno.':'Nessun appuntamento in questo mese.'}</p>`;
@@ -402,6 +409,8 @@ function aggiornaCliente(){
  mostra('datiAcc',!cliente);mostra('datiForm',!!cliente);
  $('cChi').textContent=cliente?'Ciao '+((cliente.displayName||cliente.email||'').split(' ')[0]):'';
  $('cBtn').textContent=cliente?'Esci':'Accedi con Google';
+ $('cMie').hidden=!cliente;
+ if(!cliente){['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');if(!$('mie').hidden){mostra('mie',0);mostra('prenota',1);}}
  if(cliente){const p=(cliente.displayName||'').trim().split(/\s+/);
   if(!$('fNome').value)$('fNome').value=p[0]||'';
   if(!$('fCogn').value)$('fCogn').value=p.slice(1).join(' ');
@@ -414,6 +423,26 @@ async function accediGoogle(){
   const m='Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)alert(m);}
 }
 $('btnGoogle').onclick=accediGoogle;
+/* Le mie prenotazioni (cliente): solo quelle future e non annullate, spariscono da sole dopo la data */
+async function annullaMia(b){
+ const bt=writeBatch(db);
+ bt.update(bRef(b),{annullato:true,annullatoIl:iso(new Date()),annullatoDa:'cliente'});
+ if(b.data)bt.delete(yRef(b));
+ await bt.commit();
+}
+function renderMie(){
+ const oggi=iso(new Date());
+ const L=MIE.filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).sort((a,b)=>(a.data||'9').localeCompare(b.data||'9')||(a.ora||0)-(b.ora||0));
+ $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}</div><button class="x" data-id="${b.id}">Annulla</button></div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
+  if(k.dataset.c!=='1'){k.dataset.c='1';k.textContent='Confermi? Tocca di nuovo';setTimeout(()=>{if(k.isConnected){k.dataset.c='';k.textContent='Annulla';}},5000);return;}
+  const b=MIE.find(z=>String(z.id)===k.dataset.id);if(!b)return;
+  k.disabled=true;
+  try{await annullaMia(b);}catch(e){k.disabled=false;k.dataset.c='';k.textContent='Annulla';alert('Non siamo riusciti ad annullare. Controlla la connessione e riprova.');}
+ });
+}
+$('cMie').onclick=()=>{renderMie();mostra('prenota',0);mostra('grazie',0);mostra('mie',1);window.scrollTo(0,0);};
+$('mieNuova').onclick=()=>{mostra('mie',0);mostra('prenota',1);window.scrollTo(0,0);};
 $('cBtn').onclick=()=>cliente?signOut(auth):accediGoogle();
 onAuthStateChanged(auth,async u=>{
  let ok=false;
@@ -424,6 +453,8 @@ onAuthStateChanged(auth,async u=>{
  admin=ok;cliente=u&&!ok?u:null;pronto=true;
  if(unsubB){unsubB();unsubB=null;}
  B=[];
+ if(unsubC){unsubC();unsubC=null;}MIE=[];
+ if(cliente)unsubC=onSnapshot(query(collection(db,'bookings'),where('uid','==',cliente.uid)),s=>{MIE=s.docs.map(d=>d.data());renderMie();},()=>{});
  if(ok)unsubB=onSnapshot(collection(db,'bookings'),s=>{B=s.docs.map(d=>d.data());if(sp===null)renderLista();});
  aggiornaCliente();vista();
 });

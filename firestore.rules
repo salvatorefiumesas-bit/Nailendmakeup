@@ -20,13 +20,19 @@ service cloud.firestore {
         && request.resource.data.data is string
         && request.resource.data.ora is int
         && request.resource.data.dur is int;
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (request.auth != null
+        && get(/databases/$(database)/documents/bookings/$(id)).data.uid == request.auth.uid);
     }
 
     // Prenotazioni complete: la cliente (con accesso Google) crea le proprie e legge solo quelle sue; l'admin le gestisce tutte
     match /bookings/{id} {
       allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annullato','annullatoIl','annullatoDa'])
+        && request.resource.data.annullato == true);
+      allow delete: if isAdmin();
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['id','uid','tipo','data','ora','dur','sv','nome','cogn','tel','mail','note'])
