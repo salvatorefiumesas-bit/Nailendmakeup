@@ -28,6 +28,18 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/bookings/$(id)).data.uid == request.auth.uid);
     }
 
+    // Dati della cliente (nome, cognome, telefono, email): salvati al primo appuntamento, solo lei li legge e li modifica
+    match /clienti/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nome','cogn','tel','mail'])
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 60
+        && request.resource.data.cogn is string && request.resource.data.cogn.size() <= 60
+        && request.resource.data.tel is string && request.resource.data.tel.size() <= 30
+        && request.resource.data.mail is string && request.resource.data.mail.size() <= 120;
+      allow delete: if false;
+    }
+
     // Prenotazioni complete: la cliente (con accesso Google) crea le proprie e legge solo quelle sue; l'admin le gestisce tutte
     match /bookings/{id} {
       allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);

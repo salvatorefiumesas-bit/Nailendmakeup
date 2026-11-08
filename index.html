@@ -199,7 +199,7 @@ const SV=[
 const FLAT={};
 (function reg(list,c){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc);else{o.c=cc;o.l=o.l||o.n;FLAT[o.id]=o;}});})(SV,'#C96A8E');
 const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
-let B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
+let PROF=null,B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
 const erroreSalva=()=>alert('Salvataggio non riuscito: controlla la connessione e riprova.');
 async function crea(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});await bt.commit();}
@@ -308,6 +308,8 @@ $('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi
  $('btnConf').disabled=true;
  try{await crea(rec);}catch(x){$('err').textContent='Non siamo riusciti a inviare la prenotazione. Controlla la connessione e riprova.';$('btnConf').disabled=false;return;}
  $('btnConf').disabled=false;$('err').textContent='';
+ PROF={nome:n,cogn:c,tel:t,mail:e};
+ try{const bp=writeBatch(db);bp.set(doc(db,'clienti',cliente.uid),PROF);await bp.commit();}catch(x){console.error(x);}
  mostra('prenota',0);mostra('grazie',1);window.scrollTo(0,0);
 };
 $('btnAltro').onclick=()=>{sv=null;giorno=null;ora=null;aperto={};['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');
@@ -415,10 +417,11 @@ function aggiornaCliente(){
  $('cBtn').textContent=cliente?'Esci':'Accedi con Google';
  $('cMie').hidden=!cliente;
  if(!cliente){['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');if(!$('mie').hidden){mostra('mie',0);mostra('prenota',1);}}
- if(cliente){const p=(cliente.displayName||'').trim().split(/\s+/);
-  if(!$('fNome').value)$('fNome').value=p[0]||'';
-  if(!$('fCogn').value)$('fCogn').value=p.slice(1).join(' ');
-  if(!$('fMail').value)$('fMail').value=cliente.email||'';}
+ if(cliente){const p=(cliente.displayName||'').trim().split(/\s+/),f=PROF||{};
+  if(!$('fNome').value)$('fNome').value=f.nome||p[0]||'';
+  if(!$('fCogn').value)$('fCogn').value=f.cogn||p.slice(1).join(' ');
+  if(!$('fTel').value)$('fTel').value=f.tel||'';
+  if(!$('fMail').value)$('fMail').value=f.mail||cliente.email||'';}
 }
 async function accediGoogle(){
  $('errG').textContent='';
@@ -463,6 +466,8 @@ onAuthStateChanged(auth,async u=>{
   if(!ok&&tentaAdmin){tentaAdmin=false;$('gErr').textContent='Questo account non ha accesso all’area riservata.';signOut(auth);return;}
  }
  admin=ok;cliente=u&&!ok?u:null;pronto=true;
+ PROF=null;
+ if(cliente){try{const d=await getDoc(doc(db,'clienti',cliente.uid));if(d.exists())PROF=d.data();}catch(e){}}
  if(unsubB){unsubB();unsubB=null;}
  B=[];
  if(unsubC){unsubC();unsubC=null;}MIE=[];
