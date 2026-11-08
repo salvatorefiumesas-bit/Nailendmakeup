@@ -491,9 +491,9 @@ function apriGoogleCalendar(b){
  const web=gcalUrl(b),ua=navigator.userAgent;
  if(/Android/i.test(ua)){
   const q=encodeURIComponent,tit=b.sv+' – Nails & Makeup';
-  location.href='intent://#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;package=com.google.android.calendar;'
-   +'S.title='+q(tit)+';S.description='+q('Appuntamento prenotato online.')+';l.beginTime='+calMs(b.data,b.ora)+';l.endTime='+calMs(b.data,b.ora+b.dur)+';'
-   +'S.browser_fallback_url='+q(web)+';end';
+  location.href='intent://#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;'
+   +'S.title='+q(tit)+';S.description='+q('Appuntamento prenotato online.')+';l.beginTime='+calMs(b.data,b.ora)+';l.endTime='+calMs(b.data,b.ora+b.dur)+';end';
+  setTimeout(()=>{if(!document.hidden)scaricaIcs(b);},1500);
  }else if(/iPad|iPhone|iPod/.test(ua)||(ua.includes('Macintosh')&&navigator.maxTouchPoints>1)){
   location.href=web;
  }else{window.open(web,'_blank','noopener')||(location.href=web);}
