@@ -80,6 +80,7 @@ input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4px color-mix(
 button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .cta{width:100%;margin-top:6px;padding:17px;border:0;border-radius:999px;background:linear-gradient(135deg,#8E2E66,var(--acc));color:#fff;font:700 17px "DM Sans",sans-serif;letter-spacing:.01em;cursor:pointer;box-shadow:0 14px 26px -12px var(--acc);transition:transform .1s}
 .cta:active{transform:scale(.98)}
+.calq{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}.calq[hidden]{display:none}.calq>div{background:var(--surf);border:1px solid var(--line);border-radius:22px;padding:24px 22px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 50px -10px rgba(0,0,0,.6)}.calq h3{margin:0 0 8px;font-size:20px}.calq p{margin:0 0 18px;opacity:.85}.calq .bt{display:grid;gap:10px}.calq button{font:inherit;font-weight:700;padding:13px;border-radius:14px;border:1.5px solid var(--acc);cursor:pointer}.calq .si{background:var(--acc);color:#fff}.calq .no{background:none;color:var(--acc)}
 .link{background:none;border:0;color:var(--acc);font:inherit;font-weight:700;padding:8px 0;cursor:pointer}
 .err{color:#C0392B;min-height:1.4em;margin:0 0 8px}
 .riepilogo{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,var(--surf)),var(--surf));border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:18px;padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh)}
@@ -158,7 +159,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <p>Puoi vedere o annullare le tue prenotazioni da “Le mie prenotazioni”, in alto.</p>
   <div id="calBox" hidden style="display:grid;gap:8px;margin:14px 0">
    <a class="link" id="calG" target="_blank" rel="noopener" style="display:block;text-align:center">📅 Aggiungi a Google Calendar</a>
-   <button class="link" id="calA">🍎 Aggiungi a Calendario Apple</button>
+   <button class="link" id="calApple">🍎 Aggiungi a Calendario Apple</button>
   </div>
   <button class="link btnNotCli" hidden>🔔 Ricevi un promemoria il giorno prima</button>
   <button class="link" id="btnAltro">Prenota un altro appuntamento</button>
@@ -189,6 +190,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 </main>
 
 </div>
+<div class="calq" id="calq" hidden role="dialog" aria-modal="true"><div><h3>Aggiungere al calendario?</h3><p id="calqTxt"></p><div class="bt"><button class="si" id="calqSi">Sì, aggiungi a Google Calendar</button><button class="no" id="calqNo">No, grazie</button></div></div></div>
 <script type="module">
 import{initializeApp,getApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -321,6 +323,7 @@ $('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi
  try{const bp=writeBatch(db);bp.set(doc(db,'clienti',cliente.uid),PROF);await bp.commit();}catch(x){console.error(x);}
  ULTIMA=rec.data?rec:null;$('calBox').hidden=!ULTIMA;if(ULTIMA)$('calG').href=gcalUrl(rec);
  mostra('prenota',0);mostra('grazie',1);window.scrollTo(0,0);
+ if(ULTIMA)setTimeout(()=>chiediCalendario(ULTIMA),500);
 };
 $('btnAltro').onclick=()=>{sv=null;giorno=null;ora=null;aperto={};['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');
  ['sezGiorno','sezOra','sezDati'].forEach(i=>mostra(i,0));renderSv();mostra('grazie',0);mostra('prenota',1);aggiornaCliente();window.scrollTo(0,0);};
@@ -478,7 +481,13 @@ function scaricaIcs(b){
  const u=URL.createObjectURL(new Blob([icsAppuntamento(b)],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');
  a.href=u;a.download='appuntamento.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},5000);
 }
-$('calA').onclick=()=>{if(ULTIMA)scaricaIcs(ULTIMA);};
+$('calApple').onclick=()=>{if(ULTIMA)scaricaIcs(ULTIMA);};
+function chiediCalendario(b){
+ $('calqTxt').textContent='Vuoi aggiungere l’appuntamento di '+dataLunga(b.data)+' alle '+hm(b.ora)+' a Google Calendar? Si apre già con data e ora inserite: ti basta premere Salva.';
+ $('calq').hidden=false;
+ $('calqSi').onclick=()=>{$('calq').hidden=true;window.open(gcalUrl(b),'_blank','noopener')||(location.href=gcalUrl(b));};
+ $('calqNo').onclick=()=>{$('calq').hidden=true;};
+}
 const MAX_PREN=2,GG_ANNULLO=2; // massimo prenotazioni attive per account; giorni minimi prima per annullare
 function giorniA(data){const a=new Date(iso(new Date())+'T00:00:00'),d=new Date(data+'T00:00:00');return Math.round((d-a)/86400000);}
 function annullabile(b){return !b.data||giorniA(b.data)>=GG_ANNULLO;}
