@@ -1,10 +1,10 @@
 {
-  "id": "./",
+  "id": "nails-makeup-prenota-app",
   "name": "Nails & Makeup – Prenota",
   "short_name": "Nails & Makeup",
   "description": "Prenota online manicure e trucco.",
   "lang": "it",
-  "start_url": "./",
+  "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
   "background_color": "#FAF4F6",
