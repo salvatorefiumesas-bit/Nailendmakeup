@@ -433,10 +433,13 @@ function giorniA(data){const a=new Date(iso(new Date())+'T00:00:00'),d=new Date(
 function annullabile(b){return !b.data||giorniA(b.data)>=GG_ANNULLO;}
 async function annullaMia(b){
  if(!annullabile(b))throw new Error('troppo-tardi');
- const bt=writeBatch(db);
- bt.update(bRef(b),{annullato:true,annullatoIl:iso(new Date()),annullatoDa:'cliente'});
- if(b.data)bt.delete(yRef(b));
- await bt.commit();
+ let p=1;
+ try{
+  const b1=writeBatch(db);
+  b1.update(bRef(b),{annullato:true,annullatoIl:iso(new Date()),annullatoDa:'cliente'});
+  await b1.commit();
+  if(b.data){p=2;const b2=writeBatch(db);b2.delete(yRef(b));await b2.commit();}
+ }catch(e){e.passo=p;throw e;}
 }
 function renderMie(){
  const oggi=iso(new Date());
@@ -447,7 +450,7 @@ function renderMie(){
   if(!confirm('Vuoi annullare questa prenotazione?'))return;
   k.disabled=true;
   try{await annullaMia(b);}catch(e){console.error(e);k.disabled=false;
-   alert(e.message==='troppo-tardi'?'Non si può più annullare online (servono almeno '+GG_ANNULLO+' giorni di anticipo). Contattaci.':'Non siamo riusciti ad annullare ('+(e.code||e.message)+'). Controlla la connessione e riprova.');}
+   alert(e.message==='troppo-tardi'?'Non si può più annullare online (servono almeno '+GG_ANNULLO+' giorni di anticipo). Contattaci.':'Non siamo riusciti ad annullare (passo '+(e.passo||'?')+': '+(e.code||e.message)+'). Controlla la connessione e riprova.');}
  });
 }
 $('cMie').onclick=()=>{renderMie();mostra('prenota',0);mostra('grazie',0);mostra('mie',1);window.scrollTo(0,0);};

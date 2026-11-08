@@ -7,6 +7,9 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function pad(n) { return n < 10 ? '0' + string(n) : string(n); }
+    function ymd(t) { return string(t.year()) + '-' + pad(t.month()) + '-' + pad(t.day()); }
+
     // Chi può entrare nell'area riservata: un documento admins/<UID>
     match /admins/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
@@ -33,10 +36,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annullato','annullatoIl','annullatoDa'])
         && request.resource.data.annullato == true
         && (!('data' in resource.data)
-          || request.time < timestamp.date(
-               int(resource.data.data.split('-')[0]),
-               int(resource.data.data.split('-')[1]),
-               int(resource.data.data.split('-')[2])) - duration.value(1, 'd')));
+          || resource.data.data >= ymd(request.time + duration.value(2, 'd'))));
       allow delete: if isAdmin();
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
