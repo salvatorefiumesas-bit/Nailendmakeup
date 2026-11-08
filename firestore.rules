@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Chi può entrare nell'area riservata: un documento admins/<UID>
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Orari occupati: pubblici, senza dati personali
+    match /busy/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['data','ora','dur'])
+        && request.resource.data.data is string
+        && request.resource.data.ora is int
+        && request.resource.data.dur is int;
+      allow update, delete: if isAdmin();
+    }
+
+    // Prenotazioni complete: le clienti possono solo crearle, le legge solo l'admin
+    match /bookings/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['id','tipo','data','ora','dur','sv','nome','cogn','tel','mail','note'])
+        && request.resource.data.keys().hasAll(['id','tipo','dur','sv','nome','cogn','tel','mail'])
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 60
+        && request.resource.data.cogn is string && request.resource.data.cogn.size() <= 60
+        && request.resource.data.tel is string && request.resource.data.tel.size() <= 30
+        && request.resource.data.mail is string && request.resource.data.mail.size() <= 120;
+    }
+  }
+}

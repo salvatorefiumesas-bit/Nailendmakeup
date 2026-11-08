@@ -1,0 +1,16 @@
+{
+  "name": "Nails & Makeup – Prenota",
+  "short_name": "Nails & Makeup",
+  "description": "Prenota online manicure e trucco.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FAF4F6",
+  "theme_color": "#3E1A3C",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
