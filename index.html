@@ -156,18 +156,24 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <h2 id="grazieTit">Appuntamento confermato</h2>
   <p id="grazieTxt"></p>
   <p>Puoi vedere o annullare le tue prenotazioni da “Le mie prenotazioni”, in alto.</p>
+  <div id="calBox" hidden style="display:grid;gap:8px;margin:14px 0">
+   <a class="link" id="calG" target="_blank" rel="noopener" style="display:block;text-align:center">📅 Aggiungi a Google Calendar</a>
+   <button class="link" id="calA">🍎 Aggiungi a Calendario Apple</button>
+  </div>
+  <button class="link btnNotCli" hidden>🔔 Ricevi un promemoria il giorno prima</button>
   <button class="link" id="btnAltro">Prenota un altro appuntamento</button>
  </div>
 <div id="mie" hidden>
   <header class="hero"><div><h1>Le mie prenotazioni</h1></div></header>
   <div id="mieLista" style="margin-top:18px"></div>
+  <button class="link btnNotCli" hidden>🔔 Ricevi un promemoria il giorno prima</button>
   <button class="cta" id="mieNuova">Nuova prenotazione</button>
  </div>
 <p class="foot"><a href="#gestione">Area riservata</a></p>
 </main>
 
 <main id="gestione" hidden>
- <div class="top"><button class="link" id="btnTorna">Torna al sito clienti</button><button class="link" id="btnEsci" hidden>Esci</button></div>
+ <div class="top"><button class="link" id="btnTorna">Torna al sito clienti</button><button class="link" id="btnNotAdm" hidden>🔔 Notifiche nuove prenotazioni</button><button class="link" id="btnEsci" hidden>Esci</button></div>
  <div id="login">
   <header class="hero"><div><h1>Area riservata</h1></div></header>
   <label>Email<input id="gMail" type="email" autocomplete="username"></label>
@@ -184,9 +190,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 </div>
 <script type="module">
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import{initializeApp,getApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import{getMessaging,getToken,isSupported}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 const firebaseConfig={apiKey:'AIzaSyCWxiJSuggbxSATuSAxaxNsm6B5l_8ldcQ',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
 const SV=[
@@ -200,7 +207,7 @@ const SV=[
 const FLAT={};
 (function reg(list,c){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc);else{o.c=cc;o.l=o.l||o.n;FLAT[o.id]=o;}});})(SV,'#C96A8E');
 const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
-let PROF=null,B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
+let PROF=null,ULTIMA=null,B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
 const erroreSalva=()=>alert('Salvataggio non riuscito: controlla la connessione e riprova.');
 async function crea(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});await bt.commit();}
@@ -310,7 +317,9 @@ $('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi
  try{await crea(rec);}catch(x){$('err').textContent='Non siamo riusciti a inviare la prenotazione. Controlla la connessione e riprova.';$('btnConf').disabled=false;return;}
  $('btnConf').disabled=false;$('err').textContent='';
  PROF={nome:n,cogn:c,tel:t,mail:e};
+ try{localStorage.setItem('nmprof_'+cliente.uid,JSON.stringify(PROF));}catch(x){}
  try{const bp=writeBatch(db);bp.set(doc(db,'clienti',cliente.uid),PROF);await bp.commit();}catch(x){console.error(x);}
+ ULTIMA=rec.data?rec:null;$('calBox').hidden=!ULTIMA;if(ULTIMA)$('calG').href=gcalUrl(rec);
  mostra('prenota',0);mostra('grazie',1);window.scrollTo(0,0);
 };
 $('btnAltro').onclick=()=>{sv=null;giorno=null;ora=null;aperto={};['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');
@@ -412,6 +421,31 @@ function vista(){
 }
 window.addEventListener('hashchange',vista);
 onSnapshot(collection(db,'busy'),s=>{BUSY=s.docs.map(d=>d.data());if(sv&&!sv.app&&giorno&&!$('sezOra').hidden)renderSlots();});
+
+// ---- Notifiche push (Firebase Cloud Messaging) ----
+const VAPID_KEY='INCOLLA_QUI_LA_CHIAVE_VAPID';
+async function attivaNotifiche(ruolo){
+ try{
+  if(VAPID_KEY.startsWith('INCOLLA')){alert('Le notifiche non sono ancora configurate.');return;}
+  if(!('Notification'in window)||!(await isSupported())){alert('Questo dispositivo non supporta le notifiche. Su iPhone aggiungi prima l’app alla schermata Home.');return;}
+  const p=await Notification.requestPermission();
+  if(p!=='granted'){alert('Notifiche non consentite. Attivale dalle impostazioni del browser o dell’app.');return;}
+  const reg=await navigator.serviceWorker.ready;
+  const t=await getToken(getMessaging(getApp()),{vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
+  if(!t)throw new Error('nessun token');
+  const bt=writeBatch(db);bt.set(doc(db,'pushTokens',t),{uid:auth.currentUser.uid,ruolo:ruolo,creato:Date.now()});await bt.commit();
+  try{localStorage.setItem('push_'+ruolo,'1');}catch(x){}
+  aggiornaBtnNotifiche();
+  alert('Notifiche attivate ✓');
+ }catch(e){console.error(e);alert('Non siamo riusciti ad attivare le notifiche ('+(e.code||e.message)+').');}
+}
+function aggiornaBtnNotifiche(){
+ let c=0,a=0;try{c=localStorage.getItem('push_cliente')==='1'&&Notification.permission==='granted';a=localStorage.getItem('push_admin')==='1'&&Notification.permission==='granted';}catch(x){}
+ document.querySelectorAll('.btnNotCli').forEach(b=>{b.hidden=!cliente||!!c;});
+ const ba=$('btnNotAdm');if(ba)ba.hidden=!admin||!!a;
+}
+document.querySelectorAll('.btnNotCli').forEach(b=>b.onclick=()=>attivaNotifiche('cliente'));
+$('btnNotAdm').onclick=()=>attivaNotifiche('admin');
 function aggiornaCliente(){
  mostra('datiAcc',!cliente);mostra('datiForm',!!cliente);
  $('cChi').textContent=cliente?'Ciao '+((cliente.displayName||cliente.email||'').split(' ')[0]):'';
@@ -432,6 +466,19 @@ async function accediGoogle(){
 }
 $('btnGoogle').onclick=accediGoogle;
 /* Le mie prenotazioni (cliente): solo quelle future e non annullate, spariscono da sole dopo la data */
+// ---- Aggiungi al calendario ----
+const calDT=(data,min)=>{const [y,m,d]=data.split('-').map(Number),t=new Date(y,m-1,d,0,min),p=n=>String(n).padStart(2,'0');return ''+t.getFullYear()+p(t.getMonth()+1)+p(t.getDate())+'T'+p(t.getHours())+p(t.getMinutes())+'00';};
+const calEsc=t=>String(t).replace(/([,;\\])/g,'\\$1');
+function gcalUrl(b){return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(b.sv+' – Nails & Makeup')+'&dates='+calDT(b.data,b.ora)+'/'+calDT(b.data,b.ora+b.dur)+'&ctz=Europe%2FRome&details='+encodeURIComponent('Appuntamento prenotato online.');}
+function icsAppuntamento(b){
+ const n=new Date(),p=x=>String(x).padStart(2,'0'),st=''+n.getUTCFullYear()+p(n.getUTCMonth()+1)+p(n.getUTCDate())+'T'+p(n.getUTCHours())+p(n.getUTCMinutes())+p(n.getUTCSeconds())+'Z';
+ return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nails & Makeup//IT','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT','UID:nm-'+b.id+'@nailsendmakeup','DTSTAMP:'+st,'DTSTART:'+calDT(b.data,b.ora),'DTEND:'+calDT(b.data,b.ora+b.dur),'SUMMARY:'+calEsc(b.sv+' – Nails & Makeup'),'DESCRIPTION:'+calEsc('Appuntamento prenotato online.'),'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Promemoria appuntamento','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n')+'\r\n';
+}
+function scaricaIcs(b){
+ const u=URL.createObjectURL(new Blob([icsAppuntamento(b)],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');
+ a.href=u;a.download='appuntamento.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},5000);
+}
+$('calA').onclick=()=>{if(ULTIMA)scaricaIcs(ULTIMA);};
 const MAX_PREN=2,GG_ANNULLO=2; // massimo prenotazioni attive per account; giorni minimi prima per annullare
 function giorniA(data){const a=new Date(iso(new Date())+'T00:00:00'),d=new Date(data+'T00:00:00');return Math.round((d-a)/86400000);}
 function annullabile(b){return !b.data||giorniA(b.data)>=GG_ANNULLO;}
@@ -448,7 +495,8 @@ async function annullaMia(b){
 function renderMie(){
  const oggi=iso(new Date());
  const L=MIE.filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).sort((a,b)=>(a.data||'9').localeCompare(b.data||'9')||(a.ora||0)-(b.ora||0));
- $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${b.data?`<small><a href="${gcalUrl(b)}" target="_blank" rel="noopener">📅 Google Calendar</a> · <a href="#" data-ics="${b.id}">🍎 Apple</a></small>`:''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').querySelectorAll('[data-ics]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.ics);if(b)scaricaIcs(b);});
  $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
   const b=MIE.find(z=>String(z.id)===k.dataset.id);if(!b)return;
   if(!confirm('Vuoi annullare questa prenotazione?'))return;
@@ -468,13 +516,14 @@ onAuthStateChanged(auth,async u=>{
  }
  admin=ok;cliente=u&&!ok?u:null;pronto=true;
  PROF=null;
- if(cliente){try{const d=await getDoc(doc(db,'clienti',cliente.uid));if(d.exists())PROF=d.data();}catch(e){}}
+ if(cliente){try{const d=await getDoc(doc(db,'clienti',cliente.uid));if(d.exists())PROF=d.data();}catch(e){}
+  if(!PROF){try{PROF=JSON.parse(localStorage.getItem('nmprof_'+cliente.uid)||'null');}catch(e){}}}
  if(unsubB){unsubB();unsubB=null;}
  B=[];
  if(unsubC){unsubC();unsubC=null;}MIE=[];
  if(cliente)unsubC=onSnapshot(query(collection(db,'bookings'),where('uid','==',cliente.uid)),s=>{MIE=s.docs.map(d=>d.data());renderMie();},()=>{});
  if(ok)unsubB=onSnapshot(collection(db,'bookings'),s=>{B=s.docs.map(d=>d.data());if(sp===null)renderLista();});
- aggiornaCliente();vista();
+ aggiornaCliente();vista();aggiornaBtnNotifiche();
 });
 renderSv();vista();
 /* Invito a installare l’app: Android = pulsante Installa, iPhone = Safari > Aggiungi a Home */
