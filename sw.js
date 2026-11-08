@@ -1,10 +1,37 @@
-// Service worker minimo: serve per l'installazione e per aprire la pagina anche con rete debole.
-// I dati (Firebase) non vengono mai messi in cache: prenotazioni e orari sono sempre in tempo reale.
-const V='nm-v2',FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
-self.addEventListener('fetch',e=>{
- const r=e.request;
- if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;
- e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r,cp));return res;}).catch(()=>caches.match(r).then(m=>m||caches.match('./index.html'))));
+/* Service worker – Nails & Makeup
+   Strategia: rete per prima (così index.html è sempre l'ultima versione),
+   cache solo come riserva se manca la connessione.
+   Per forzare un aggiornamento in futuro basta cambiare VERSIONE. */
+const VERSIONE = 'nm-v3';
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(chiavi => Promise.all(chiavi.filter(k => k !== VERSIONE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const r = e.request;
+  if (r.method !== 'GET') return;
+  const u = new URL(r.url);
+  // Solo file del proprio sito: Firebase, Google, font ecc. passano diretti
+  if (u.origin !== self.location.origin) return;
+
+  e.respondWith(
+    fetch(r, { cache: 'no-cache' })
+      .then(res => {
+        if (res && res.ok) {
+          const copia = res.clone();
+          caches.open(VERSIONE).then(c => c.put(r, copia)).catch(() => {});
+        }
+        return res;
+      })
+      .catch(() => caches.match(r).then(x => x || caches.match('./index.html')))
+  );
 });
