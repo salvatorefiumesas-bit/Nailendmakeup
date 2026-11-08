@@ -506,14 +506,23 @@ function icsAppuntamento(b){
 }
 function scaricaIcs(b){
  const u=URL.createObjectURL(new Blob([icsAppuntamento(b)],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');
- a.href=u;a.download='appuntamento.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},5000);
+ a.href=u;if(!(typeof IOS!=='undefined'&&IOS))a.download='appuntamento.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},60000);
 }
 const ANDROID=/Android/i.test(navigator.userAgent);
-const ETI_ALTRO=ANDROID?'📅 Calendario del telefono (Samsung, altri)':'🍎 Aggiungi a Calendario Apple';
+const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.userAgent.includes('Macintosh')&&navigator.maxTouchPoints>1);
+const ETI_ALTRO=ANDROID?'📅 Calendario del telefono (Samsung, altri)':IOS?'🍎 Aggiungi al Calendario dell’iPhone':'🍎 Aggiungi a Calendario Apple';
 $('calApple').textContent=ETI_ALTRO;
+if(IOS)$('calG').style.display='none';
 $('calApple').onclick=()=>{if(ULTIMA)scaricaIcs(ULTIMA);};
 $('calG').onclick=ev=>{ev.preventDefault();if(ULTIMA)apriGoogleCalendar(ULTIMA);};
 function chiediCalendario(b){
+ if(IOS){
+  $('calqTxt').textContent='Vuoi aggiungere l’appuntamento di '+dataLunga(b.data)+' alle '+hm(b.ora)+' al Calendario dell’iPhone? Si apre già con data e ora inserite: ti basta premere Aggiungi.';
+  $('calqSi').textContent='Sì, aggiungi al Calendario';$('calqAltro').hidden=true;
+  $('calqSi').onclick=()=>{$('calq').hidden=true;scaricaIcs(b);};
+  $('calqNo').onclick=()=>{$('calq').hidden=true;};
+  $('calq').hidden=false;return;
+ }
  $('calqTxt').textContent='Vuoi aggiungere l’appuntamento di '+dataLunga(b.data)+' alle '+hm(b.ora)+' a Google Calendar? Si apre già con data e ora inserite: ti basta premere Salva.'+(ANDROID?' Se non hai l’app Google Calendar, scegli “Uso un altro calendario”.':'');
  $('calq').hidden=false;
  $('calqSi').onclick=()=>{$('calq').hidden=true;apriGoogleCalendar(b);};
@@ -537,7 +546,7 @@ async function annullaMia(b){
 function renderMie(){
  const oggi=iso(new Date());
  const L=MIE.filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).sort((a,b)=>(a.data||'9').localeCompare(b.data||'9')||(a.ora||0)-(b.ora||0));
- $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${b.data?`<small><a href="${gcalUrl(b)}" data-gcal="${b.id}">📅 Google Calendar</a> · <a href="#" data-ics="${b.id}">${ANDROID?'📅 Altro calendario':'🍎 Apple'}</a></small>`:''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${b.data?`<small>${IOS?'':`<a href="${gcalUrl(b)}" data-gcal="${b.id}">📅 Google Calendar</a> · `}<a href="#" data-ics="${b.id}">${ANDROID?'📅 Altro calendario':IOS?'🍎 Calendario iPhone':'🍎 Apple'}</a></small>`:''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
  $('mieLista').querySelectorAll('[data-gcal]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.gcal);if(b)apriGoogleCalendar(b);});
  $('mieLista').querySelectorAll('[data-ics]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.ics);if(b)scaricaIcs(b);});
  $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
