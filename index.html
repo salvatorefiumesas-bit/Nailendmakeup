@@ -185,7 +185,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyCWxiJSuggbxSATuSAxaxNsm6B5l_8ldcQ',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
 const SV=[
@@ -286,6 +286,10 @@ function renderSlots(){
   $('riep').innerHTML=`<b>${sv.l}</b><br>${dataLunga(giorno)}, ore ${hm(ora)} (${fd(sv.d)})`;$('sezDati').scrollIntoView({behavior:'smooth',block:'start'});});
 }
 $('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi con Google per prenotare.';return;}
+ try{const oggi=iso(new Date());const s=await getDocs(query(collection(db,'bookings'),where('uid','==',cliente.uid)));
+  const att=s.docs.map(d=>d.data()).filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).length;
+  if(att>=MAX_PREN){$('err').textContent='Hai già '+MAX_PREN+' prenotazioni in programma. Per prenotarne un’altra annulla una delle tue da “Le mie prenotazioni” oppure contattaci.';return;}
+ }catch(x){$('err').textContent='Non riusciamo a controllare le tue prenotazioni. Controlla la connessione e riprova.';return;}
  const n=$('fNome').value.trim(),c=$('fCogn').value.trim(),t=$('fTel').value.trim(),e=$('fMail').value.trim(),q=$('fNote').value.trim();
  if(!n||!c){$('err').textContent='Inserisci nome e cognome.';return;}
  if(t.replace(/\D/g,'').length<6){$('err').textContent='Inserisci un numero di telefono valido.';return;}
@@ -424,7 +428,11 @@ async function accediGoogle(){
 }
 $('btnGoogle').onclick=accediGoogle;
 /* Le mie prenotazioni (cliente): solo quelle future e non annullate, spariscono da sole dopo la data */
+const MAX_PREN=2,GG_ANNULLO=2; // massimo prenotazioni attive per account; giorni minimi prima per annullare
+function giorniA(data){const a=new Date(iso(new Date())+'T00:00:00'),d=new Date(data+'T00:00:00');return Math.round((d-a)/86400000);}
+function annullabile(b){return !b.data||giorniA(b.data)>=GG_ANNULLO;}
 async function annullaMia(b){
+ if(!annullabile(b))throw new Error('troppo-tardi');
  const bt=writeBatch(db);
  bt.update(bRef(b),{annullato:true,annullatoIl:iso(new Date()),annullatoDa:'cliente'});
  if(b.data)bt.delete(yRef(b));
@@ -433,12 +441,13 @@ async function annullaMia(b){
 function renderMie(){
  const oggi=iso(new Date());
  const L=MIE.filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).sort((a,b)=>(a.data||'9').localeCompare(b.data||'9')||(a.ora||0)-(b.ora||0));
- $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}</div><button class="x" data-id="${b.id}">Annulla</button></div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
  $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
-  if(k.dataset.c!=='1'){k.dataset.c='1';k.textContent='Confermi? Tocca di nuovo';setTimeout(()=>{if(k.isConnected){k.dataset.c='';k.textContent='Annulla';}},5000);return;}
   const b=MIE.find(z=>String(z.id)===k.dataset.id);if(!b)return;
+  if(!confirm('Vuoi annullare questa prenotazione?'))return;
   k.disabled=true;
-  try{await annullaMia(b);}catch(e){k.disabled=false;k.dataset.c='';k.textContent='Annulla';alert('Non siamo riusciti ad annullare. Controlla la connessione e riprova.');}
+  try{await annullaMia(b);}catch(e){console.error(e);k.disabled=false;
+   alert(e.message==='troppo-tardi'?'Non si può più annullare online (servono almeno '+GG_ANNULLO+' giorni di anticipo). Contattaci.':'Non siamo riusciti ad annullare ('+(e.code||e.message)+'). Controlla la connessione e riprova.');}
  });
 }
 $('cMie').onclick=()=>{renderMie();mostra('prenota',0);mostra('grazie',0);mostra('mie',1);window.scrollTo(0,0);};

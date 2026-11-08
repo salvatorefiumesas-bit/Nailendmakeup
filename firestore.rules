@@ -31,7 +31,12 @@ service cloud.firestore {
       allow update: if isAdmin() || (request.auth != null
         && resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annullato','annullatoIl','annullatoDa'])
-        && request.resource.data.annullato == true);
+        && request.resource.data.annullato == true
+        && (!('data' in resource.data)
+          || request.time < timestamp.date(
+               int(resource.data.data.split('-')[0]),
+               int(resource.data.data.split('-')[1]),
+               int(resource.data.data.split('-')[2])) - duration.value(1, 'd')));
       allow delete: if isAdmin();
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
