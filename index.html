@@ -490,10 +490,10 @@ const calMs=(data,min)=>{const [y,m,d]=data.split('-').map(Number);return new Da
 function apriGoogleCalendar(b){
  const web=gcalUrl(b),ua=navigator.userAgent;
  if(/Android/i.test(ua)){
-  const q=encodeURIComponent,tit=b.sv+' – Nails & Makeup';
-  location.href='intent://#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;'
-   +'S.title='+q(tit)+';S.description='+q('Appuntamento prenotato online.')+';l.beginTime='+calMs(b.data,b.ora)+';l.endTime='+calMs(b.data,b.ora+b.dur)+';end';
-  setTimeout(()=>{if(!document.hidden)scaricaIcs(b);},1500);
+  const q=encodeURIComponent;
+  /* Il Calendar accetta dai link solo www.google.com/calendar/event (BROWSABLE): l'intent INSERT verrebbe rifiutato da Chrome */
+  location.href='intent://www.google.com/calendar/event?action=TEMPLATE&text='+q(b.sv+' – Nails & Makeup')+'&dates='+calDT(b.data,b.ora)+'/'+calDT(b.data,b.ora+b.dur)+'&ctz=Europe%2FRome&details='+q('Appuntamento prenotato online.')
+   +'#Intent;scheme=https;package=com.google.android.calendar;S.browser_fallback_url='+q(web)+';end';
  }else if(/iPad|iPhone|iPod/.test(ua)||(ua.includes('Macintosh')&&navigator.maxTouchPoints>1)){
   location.href=web;
  }else{window.open(web,'_blank','noopener')||(location.href=web);}
