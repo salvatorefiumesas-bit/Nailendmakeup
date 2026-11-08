@@ -6,6 +6,7 @@ Pagina di prenotazione online con area riservata. Hosting su GitHub Pages, login
 - `index.html`: la pagina (clienti + area riservata, raggiungibile da `#gestione`)
 - `firestore.rules`: regole di sicurezza da incollare nella console Firebase (non si attivano da GitHub)
 - `manifest.webmanifest`, `sw.js`, `icons/`: icone e installazione come app sul telefono
+- `qr-nails-makeup.png` e `.svg`: QR code della pagina, da stampare
 
 ## Configurazione Firebase
 1. Authentication: attiva "Email/password" e crea l'utente della titolare.

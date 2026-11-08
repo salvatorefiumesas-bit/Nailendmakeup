@@ -15,18 +15,22 @@ service cloud.firestore {
     // Orari occupati: pubblici, senza dati personali
     match /busy/{id} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['data','ora','dur'])
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['data','ora','dur'])
         && request.resource.data.data is string
         && request.resource.data.ora is int
         && request.resource.data.dur is int;
       allow update, delete: if isAdmin();
     }
 
-    // Prenotazioni complete: le clienti possono solo crearle, le legge solo l'admin
+    // Prenotazioni complete: la cliente (con accesso Google) crea le proprie e legge solo quelle sue; l'admin le gestisce tutte
     match /bookings/{id} {
-      allow read, update, delete: if isAdmin();
-      allow create: if request.resource.data.keys().hasOnly(['id','tipo','data','ora','dur','sv','nome','cogn','tel','mail','note'])
-        && request.resource.data.keys().hasAll(['id','tipo','dur','sv','nome','cogn','tel','mail'])
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['id','uid','tipo','data','ora','dur','sv','nome','cogn','tel','mail','note'])
+        && request.resource.data.keys().hasAll(['id','uid','tipo','dur','sv','nome','cogn','tel','mail'])
         && request.resource.data.nome is string && request.resource.data.nome.size() <= 60
         && request.resource.data.cogn is string && request.resource.data.cogn.size() <= 60
         && request.resource.data.tel is string && request.resource.data.tel.size() <= 30

@@ -112,6 +112,9 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .gd{font:500 19px "Bodoni Moda",Georgia,serif;color:var(--head);margin:26px 0 12px;text-transform:capitalize}
 .ct{display:inline-block;margin:6px 0 0 8px;padding:3px 12px;border:1.5px solid var(--acc);border-radius:999px;color:var(--acc);font-weight:700;font-size:13px;text-decoration:none}
 .note .ct{margin:8px 8px 0 0}
+.inst{background:var(--surf);border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:18px;padding:14px 16px;margin:12px 0 0;box-shadow:var(--sh);font-size:15px}
+.inst p{margin:0}.inst .it{display:block;margin-bottom:2px;font:500 19px "Bodoni Moda",Georgia,serif;color:var(--head)}
+.inst .cta{margin:10px 0 0;padding:12px;font-size:15px}.inst .link{display:block;margin:2px auto 0;font-size:14px}
 .top{display:flex;justify-content:space-between;align-items:center;padding-top:20px}
 .foot{text-align:center;margin:44px 0 0;font-size:13px}.foot a{color:var(--mute)}
 [hidden]{display:none!important}
@@ -123,22 +126,27 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 <main id="clienti">
  <div id="prenota">
+  <div class="top" id="cBar"><span class="hint" id="cChi" style="margin:0"></span><button class="link" id="cBtn">Accedi con Google</button></div>
   <header class="hero">
    <div><span class="eyebrow">Prenotazioni online</span><h1>Nails &amp; Makeup</h1><p>Scegli il servizio e il giorno: ti aspettiamo.</p></div>
    <div class="caps" aria-hidden="true"><i style="--c:#E8A0B4;height:46px"></i><i style="--c:#C96A8E;height:62px"></i><i style="--c:#9B4F7A;height:54px"></i><i style="--c:#D9B77E;height:72px"></i></div>
   </header>
+  <div class="inst" id="inst" hidden><p id="instTxt"></p><button class="cta" id="instBtn" hidden></button><button class="link" id="instX">Non ora</button></div>
   <section><h2>Che servizio vuoi?</h2><div id="elSv"></div></section>
   <section id="sezGiorno" hidden><h2>Quale giorno?</h2><p class="hint">Da lunedì a venerdì, 9:30–13:00 e 15:30–18:30.</p><div id="elDays"></div></section>
   <section id="sezOra" hidden><h2>A che ora?</h2><div class="slots" id="elSlots"></div></section>
   <section id="sezDati" hidden>
    <h2>I tuoi dati</h2>
    <div class="riepilogo" id="riep"></div>
+   <div id="datiAcc" hidden><p class="hint">Per prenotare accedi con il tuo account Google: così ritrovi le tue prenotazioni e non devi reinserire i dati.</p><button class="cta" id="btnGoogle">Accedi con Google</button><p class="err" id="errG" role="alert"></p></div>
+   <div id="datiForm" hidden>
    <div class="two"><label>Nome<input id="fNome" autocomplete="given-name"></label><label>Cognome<input id="fCogn" autocomplete="family-name"></label></div>
    <label>Telefono<input id="fTel" type="tel" autocomplete="tel"></label>
    <label>Email<input id="fMail" type="email" autocomplete="email"></label>
    <label id="lblNote" hidden>Quando ti serve?<input id="fNote" placeholder="Es. matrimonio il 14 giugno"></label>
    <p class="err" id="err" role="alert"></p>
    <button class="cta" id="btnConf">Conferma appuntamento</button>
+   </div>
   </section>
  </div>
  <div id="grazie" class="conf" hidden>
@@ -169,7 +177,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 </div>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,onSnapshot,writeBatch}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyCWxiJSuggbxSATuSAxaxNsm6B5l_8ldcQ',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
@@ -184,7 +192,7 @@ const SV=[
 const FLAT={};
 (function reg(list,c){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc);else{o.c=cc;o.l=o.l||o.n;FLAT[o.id]=o;}});})(SV,'#C96A8E');
 const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
-let B=[],BUSY=[],unsubB=null,pronto=false; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
+let B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
 const erroreSalva=()=>alert('Salvataggio non riuscito: controlla la connessione e riprova.');
 async function crea(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});await bt.commit();}
@@ -270,19 +278,19 @@ function renderSlots(){
  $('elSlots').querySelectorAll('.slot').forEach(b=>b.onclick=()=>{ora=Number(b.dataset.m);renderSlots();mostra('sezDati',1);
   $('riep').innerHTML=`<b>${sv.l}</b><br>${dataLunga(giorno)}, ore ${hm(ora)} (${fd(sv.d)})`;$('sezDati').scrollIntoView({behavior:'smooth',block:'start'});});
 }
-$('btnConf').onclick=async()=>{let rec;
+$('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi con Google per prenotare.';return;}
  const n=$('fNome').value.trim(),c=$('fCogn').value.trim(),t=$('fTel').value.trim(),e=$('fMail').value.trim(),q=$('fNote').value.trim();
  if(!n||!c){$('err').textContent='Inserisci nome e cognome.';return;}
  if(t.replace(/\D/g,'').length<6){$('err').textContent='Inserisci un numero di telefono valido.';return;}
  if(!/^\S+@\S+\.\S+$/.test(e)){$('err').textContent='Inserisci un’email valida, per esempio nome@email.it.';return;}
  if(sv.app){
   if(!q){$('err').textContent='Indica la data dell’evento o il periodo in cui ti serve.';return;}
-  rec={id:Date.now(),tipo:'richiesta',dur:sv.d,sv:sv.l,nome:n,cogn:c,tel:t,mail:e,note:q};
+  rec={id:Date.now(),tipo:'richiesta',dur:sv.d,sv:sv.l,nome:n,cogn:c,tel:t,mail:e,note:q,uid:cliente.uid};
   $('grazieTit').textContent='Richiesta inviata';
   $('grazieTxt').textContent=`Grazie ${n}, abbiamo ricevuto la tua richiesta per ${sv.l.toLowerCase()}. Ti contatteremo per concordare giorno e ora.`;
  }else{
   if(occupato(giorno,ora,sv.d)){$('err').textContent='Questo orario è appena stato prenotato: scegline un altro.';renderSlots();return;}
-  rec={id:Date.now(),tipo:'app',data:giorno,ora:ora,dur:sv.d,sv:sv.l,nome:n,cogn:c,tel:t,mail:e};
+  rec={id:Date.now(),tipo:'app',data:giorno,ora:ora,dur:sv.d,sv:sv.l,nome:n,cogn:c,tel:t,mail:e,uid:cliente.uid};
   $('grazieTit').textContent='Appuntamento confermato';
   $('grazieTxt').textContent=`Grazie ${n}, ti aspettiamo ${dataLunga(giorno)} alle ${hm(ora)} per ${sv.l.toLowerCase()}.`;
  }
@@ -292,7 +300,7 @@ $('btnConf').onclick=async()=>{let rec;
  mostra('prenota',0);mostra('grazie',1);window.scrollTo(0,0);
 };
 $('btnAltro').onclick=()=>{sv=null;giorno=null;ora=null;aperto={};['fNome','fCogn','fTel','fMail','fNote'].forEach(i=>$(i).value='');
- ['sezGiorno','sezOra','sezDati'].forEach(i=>mostra(i,0));renderSv();mostra('grazie',0);mostra('prenota',1);window.scrollTo(0,0);};
+ ['sezGiorno','sezOra','sezDati'].forEach(i=>mostra(i,0));renderSv();mostra('grazie',0);mostra('prenota',1);aggiornaCliente();window.scrollTo(0,0);};
 
 /* Area riservata */
 function numWa(t){const d=t.replace(/\D/g,'');if(t.trim().startsWith('+'))return d;if(d.startsWith('00'))return d.slice(2);if(d.startsWith('39')&&d.length>=11)return d;return '39'+d;}
@@ -373,7 +381,7 @@ function renderLista(){
 $('btnEntra').onclick=async()=>{
  const m=$('gMail').value.trim(),p=$('gPw').value;
  if(!m||!p){$('gErr').textContent='Inserisci email e password.';return;}
- $('btnEntra').disabled=true;$('gErr').textContent='';
+ $('btnEntra').disabled=true;$('gErr').textContent='';tentaAdmin=true;setTimeout(()=>{tentaAdmin=false;},5000);
  try{await signInWithEmailAndPassword(auth,m,p);$('gPw').value='';}
  catch(e){$('gErr').textContent=e.code==='auth/too-many-requests'?'Troppi tentativi. Riprova tra qualche minuto.':'Email o password non corretta. Riprova.';}
  $('btnEntra').disabled=false;
@@ -390,19 +398,54 @@ function vista(){
 }
 window.addEventListener('hashchange',vista);
 onSnapshot(collection(db,'busy'),s=>{BUSY=s.docs.map(d=>d.data());if(sv&&!sv.app&&giorno&&!$('sezOra').hidden)renderSlots();});
+function aggiornaCliente(){
+ mostra('datiAcc',!cliente);mostra('datiForm',!!cliente);
+ $('cChi').textContent=cliente?'Ciao '+((cliente.displayName||cliente.email||'').split(' ')[0]):'';
+ $('cBtn').textContent=cliente?'Esci':'Accedi con Google';
+ if(cliente){const p=(cliente.displayName||'').trim().split(/\s+/);
+  if(!$('fNome').value)$('fNome').value=p[0]||'';
+  if(!$('fCogn').value)$('fCogn').value=p.slice(1).join(' ');
+  if(!$('fMail').value)$('fMail').value=cliente.email||'';}
+}
+async function accediGoogle(){
+ $('errG').textContent='';
+ try{await signInWithPopup(auth,new GoogleAuthProvider());}
+ catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
+  const m='Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)alert(m);}
+}
+$('btnGoogle').onclick=accediGoogle;
+$('cBtn').onclick=()=>cliente?signOut(auth):accediGoogle();
 onAuthStateChanged(auth,async u=>{
  let ok=false;
  if(u){
   try{ok=(await getDoc(doc(db,'admins',u.uid))).exists();}catch(e){}
-  if(!ok){$('gErr').textContent='Questo account non ha accesso all’area riservata.';signOut(auth);return;}
+  if(!ok&&tentaAdmin){tentaAdmin=false;$('gErr').textContent='Questo account non ha accesso all’area riservata.';signOut(auth);return;}
  }
- admin=ok;pronto=true;
+ admin=ok;cliente=u&&!ok?u:null;pronto=true;
  if(unsubB){unsubB();unsubB=null;}
  B=[];
  if(ok)unsubB=onSnapshot(collection(db,'bookings'),s=>{B=s.docs.map(d=>d.data());if(sp===null)renderLista();});
- vista();
+ aggiornaCliente();vista();
 });
 renderSv();vista();
+/* Invito a installare l’app: Android = pulsante Installa, iPhone = Safari > Aggiungi a Home */
+(function(){
+ const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(ua.includes('Macintosh')&&navigator.maxTouchPoints>1);
+ if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;
+ try{if(localStorage.getItem('instChiuso')==='1')return;}catch(e){}
+ const box=$('inst'),txt=$('instTxt'),btn=$('instBtn');
+ const apri=(t,lab,fn)=>{txt.innerHTML=t;btn.textContent=lab||'';btn.onclick=fn||null;btn.hidden=!fn;box.hidden=false;};
+ $('instX').onclick=()=>{box.hidden=true;try{localStorage.setItem('instChiuso','1');}catch(e){}};
+ if(ios){
+  const safari=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|Instagram|Line|GSA/.test(ua);
+  if(safari)apri('<span class="it">Installa l’app</span>Tocca <b>Condividi</b> (il quadrato con la freccia) e poi <b>Aggiungi a Home</b>.');
+  else apri('<span class="it">Apri in Safari</span>Per installare l’app apri questa pagina con <b>Safari</b>, poi tocca Condividi e <b>Aggiungi a Home</b>.','Copia il link',async()=>{const u=location.href.split('#')[0];try{await navigator.clipboard.writeText(u);btn.textContent='Link copiato';}catch(e){prompt('Copia questo link e aprilo in Safari:',u);}});
+ }else{
+  let ev=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;apri('<span class="it">Installa l’app</span>Aggiungila alla schermata Home per prenotare più in fretta.','Installa app',async()=>{ev.prompt();await ev.userChoice;ev=null;box.hidden=true;});});
+  addEventListener('appinstalled',()=>{box.hidden=true;});
+ }
+})();
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
