@@ -205,6 +205,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 </div>
 <div class="calq" id="loginModal" hidden role="dialog" aria-modal="true"><div id="loginModalIn" style="max-height:90vh;overflow:auto;text-align:left"><div style="text-align:right"><button class="link" id="lmX" aria-label="Chiudi">✕ Chiudi</button></div><h3 style="margin:0 0 8px">Accedi o registrati</h3></div></div>
+<div class="calq" id="dlg" hidden role="dialog" aria-modal="true"><div><h3 id="dlgT"></h3><p id="dlgP"></p><div class="bt"><button class="si" id="dlgOk"></button><button class="no" id="dlgNo"></button></div></div></div>
 <div class="calq" id="calq" hidden role="dialog" aria-modal="true"><div><h3>Aggiungere al calendario?</h3><p id="calqTxt"></p><div class="bt"><button class="si" id="calqSi">Sì, aggiungi a Google Calendar</button><button class="si" id="calqAltro" hidden style="background:transparent;border:1px solid var(--line);color:inherit">Uso un altro calendario (Samsung…)</button><button class="no" id="calqNo">No, grazie</button></div></div></div>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -225,7 +226,10 @@ const FLAT={};
 const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
 let PROF=null,daVer=null,ULTIMA=null,B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
-const erroreSalva=()=>alert('Salvataggio non riuscito: controlla la connessione e riprova.');
+function dialogo(titolo,testo,okTxt,noTxt){return new Promise(res=>{const d=document.getElementById('dlg'),ok=document.getElementById('dlgOk'),no=document.getElementById('dlgNo');document.getElementById('dlgT').textContent=titolo;document.getElementById('dlgP').textContent=testo||'';ok.textContent=okTxt;no.textContent=noTxt||'';no.hidden=!noTxt;d.hidden=false;const fine=v=>{d.hidden=true;ok.onclick=no.onclick=null;res(v);};ok.onclick=()=>fine(true);no.onclick=()=>fine(false);});}
+const conferma=(t,okTxt,noTxt)=>dialogo(t,'',okTxt||'Sì',noTxt||'No');
+const avviso=t=>dialogo('Attenzione',t,'Ok');
+const erroreSalva=()=>avviso('Salvataggio non riuscito: controlla la connessione e riprova.');
 async function crea(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});await bt.commit();}
 async function scrivi(b){const bt=writeBatch(db);bt.set(bRef(b),b);if(b.data&&!b.annullato)bt.set(yRef(b),{data:b.data,ora:b.ora,dur:b.dur});else if(b.data)bt.delete(yRef(b));await bt.commit();}
 const $=id=>document.getElementById(id);
@@ -457,7 +461,7 @@ async function accediGoogle(){
  $('errG').textContent='';
  try{await signInWithPopup(auth,new GoogleAuthProvider());}
  catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
-  const m='Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)alert(m);}
+  const m='Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)avviso(m);}
 }
 $('btnGoogle').onclick=accediGoogle;
 const erroreAuth=e=>{const c=e&&e.code;
@@ -551,10 +555,10 @@ function renderMie(){
  $('mieLista').querySelectorAll('[data-ics]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.ics);if(b)scaricaIcs(b);});
  $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
   const b=MIE.find(z=>String(z.id)===k.dataset.id);if(!b)return;
-  if(!confirm('Vuoi annullare questa prenotazione?'))return;
+  if(!await conferma('Vuoi annullare questa prenotazione?','Sì, annulla','No, tienila'))return;
   k.disabled=true;
   try{await annullaMia(b);}catch(e){console.error(e);k.disabled=false;
-   alert(e.message==='troppo-tardi'?'Non si può più annullare online (servono almeno '+GG_ANNULLO+' giorni di anticipo). Contattaci.':'Non siamo riusciti ad annullare (passo '+(e.passo||'?')+': '+(e.code||e.message)+'). Controlla la connessione e riprova.');}
+   avviso(e.message==='troppo-tardi'?'Non si può più annullare online (servono almeno '+GG_ANNULLO+' giorni di anticipo). Contattaci.':'Non siamo riusciti ad annullare (passo '+(e.passo||'?')+': '+(e.code||e.message)+'). Controlla la connessione e riprova.');}
  });
 }
 $('cMie').onclick=()=>{renderMie();mostra('prenota',0);mostra('grazie',0);mostra('mie',1);window.scrollTo(0,0);};
