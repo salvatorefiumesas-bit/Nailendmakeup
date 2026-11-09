@@ -236,6 +236,28 @@ setTimeout(chiudi,7000);})();
 <div class="calq" id="loginModal" hidden role="dialog" aria-modal="true"><div id="loginModalIn" style="max-height:90vh;overflow:auto;text-align:left"><div style="text-align:right"><button class="link" id="lmX" aria-label="Chiudi">✕ Chiudi</button></div><h3 style="margin:0 0 8px">Accedi o registrati</h3></div></div>
 <div class="calq" id="dlg" hidden role="dialog" aria-modal="true"><div><h3 id="dlgT"></h3><p id="dlgP"></p><div class="bt"><button class="si" id="dlgOk"></button><button class="no" id="dlgNo"></button></div></div></div>
 <div class="calq" id="calq" hidden role="dialog" aria-modal="true"><div><h3>Aggiungere al calendario?</h3><p id="calqTxt"></p><div class="bt"><button class="si" id="calqSi">Sì, aggiungi a Google Calendar</button><button class="si" id="calqAltro" hidden style="background:transparent;border:1px solid var(--line);color:inherit">Uso un altro calendario (Samsung…)</button><button class="no" id="calqNo">No, grazie</button></div></div></div>
+<script>
+/* Tic discreto sui pulsanti (Web Audio, nessun file audio) */
+(function(){var C=null;
+function tic(){try{
+ C=C||new (window.AudioContext||window.webkitAudioContext)();
+ if(C.state==='suspended')C.resume();
+ var t=C.currentTime,o=C.createOscillator(),g=C.createGain();
+ o.type='sine';o.frequency.setValueAtTime(1400,t);o.frequency.exponentialRampToValueAtTime(900,t+0.04);
+ g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.06,t+0.005);g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
+ o.connect(g);g.connect(C.destination);o.start(t);o.stop(t+0.07);
+}catch(e){}}
+window.chime=function(){try{
+ C=C||new (window.AudioContext||window.webkitAudioContext)();
+ if(C.state==='suspended')C.resume();
+ [[1319,0.9,0.09],[2637,0.5,0.025]].forEach(function(n){var t=C.currentTime+0.12,o=C.createOscillator(),g=C.createGain();
+  o.type='sine';o.frequency.setValueAtTime(n[0],t);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(n[2],t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+n[1]);
+  o.connect(g);g.connect(C.destination);o.start(t);o.stop(t+n[1]+0.02);});
+}catch(e){}};
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(b&&!b.disabled)tic();},true);
+})();
+</script>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -367,6 +389,7 @@ $('btnConf').onclick=async()=>{let rec;if(!cliente){$('err').textContent='Accedi
  $('btnConf').disabled=true;
  try{await crea(rec);}catch(x){$('err').textContent='Non siamo riusciti a inviare la prenotazione. Controlla la connessione e riprova.';$('btnConf').disabled=false;return;}
  $('btnConf').disabled=false;$('err').textContent='';
+ if(window.chime)window.chime();
  PROF={nome:n,cogn:c,tel:t,mail:e};
  try{localStorage.setItem('nmprof_'+cliente.uid,JSON.stringify(PROF));}catch(x){}
  try{const bp=writeBatch(db);bp.set(doc(db,'clienti',cliente.uid),PROF);await bp.commit();}catch(x){console.error(x);}
