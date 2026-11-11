@@ -122,6 +122,38 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #cBar{flex-wrap:wrap;gap:0 14px}#cBar>span:last-child{display:flex;gap:14px;flex-wrap:wrap}
 .top{display:flex;justify-content:space-between;align-items:center;padding-top:20px}
 .foot{text-align:center;margin:44px 0 0;font-size:13px}.foot a{color:var(--mute)}
+/* Impostazioni (area riservata) */
+.tabs{display:flex;margin:18px 0 4px;padding:4px;background:color-mix(in srgb,var(--acc) 8%,var(--surf));border-radius:999px}
+.tabs button{flex:1;padding:11px 8px;border:0;border-radius:999px;background:none;font:700 15px "DM Sans",sans-serif;color:var(--mute);cursor:pointer;transition:background .2s,color .2s}
+.tabs button[aria-pressed="true"]{background:var(--surf);color:var(--head);box-shadow:var(--sh)}
+select{display:block;width:100%;margin-top:6px;padding:13px 14px;font:400 16px "DM Sans",sans-serif;color:var(--ink);background:var(--surf);border:1.5px solid var(--line);border-radius:14px}
+.imp h3{font:500 22px "Bodoni Moda",Georgia,serif;color:var(--head);margin:30px 0 6px}
+.imp h3::before{content:"";display:block;width:30px;height:2px;margin-bottom:10px;background:linear-gradient(90deg,var(--gold),transparent)}
+.imp>.hint{margin:0 0 12px}
+.ic{background:var(--surf);border:1.5px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--sh)}
+.ic label{margin-bottom:12px}
+.ic label:last-child{margin-bottom:0}
+.chk{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink);font-weight:500;cursor:pointer}
+.chk input{width:20px;height:20px;margin:0;padding:0;flex:none;accent-color:var(--acc)}
+.ic .slots{margin-bottom:6px}
+.slot.sm{padding:9px 14px;font-size:15px}
+.rowt{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.rowt>label{flex:1 1 110px;margin:0}
+.rowt>.link{flex:none;padding:12px 4px}
+.link.no{color:#C0392B}
+.link.sm{font-size:14px;padding:6px 0;margin-right:14px}
+input[type=color]{padding:3px;height:48px;width:60px;cursor:pointer}
+.nd{border-left:3px solid var(--c,var(--gold));padding-left:12px;margin:14px 0 0}
+.nd .nd{margin-top:12px}
+.nd .azn{display:flex;flex-wrap:wrap;gap:0 6px;margin:2px 0 4px}
+.nh{display:flex;gap:10px;align-items:flex-end}
+.nh>label{flex:1;margin:0 0 12px}
+.nh>label.mn{flex:0 0 92px}
+.nh>label.cl{flex:0 0 64px}
+.isave{position:sticky;bottom:0;display:flex;flex-direction:column;gap:6px;padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));margin-top:20px;background:linear-gradient(transparent,var(--bg) 28%)}
+.isave .err{min-height:0}
+.isb{display:flex;gap:14px;align-items:center;justify-content:flex-end}
+.isb .cta{width:auto;margin:0;padding:14px 26px}
 [hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 
@@ -168,7 +200,7 @@ setTimeout(chiudi,7000);})();
   </header>
   <div class="inst" id="inst" hidden><p id="instTxt"></p><button class="cta" id="instBtn" hidden></button><button class="link" id="instX">Non ora</button></div>
   <section><h2>Che servizio vuoi?</h2><div id="elSv"></div></section>
-  <section id="sezGiorno" hidden><h2>Quale giorno?</h2><p class="hint">Da lunedì a venerdì, 9:30–13:00 e 15:30–18:30.</p><div id="elDays"></div></section>
+  <section id="sezGiorno" hidden><h2>Quale giorno?</h2><p class="hint" id="hOrari">Da lunedì a venerdì, 9:30–13:00 e 15:30–18:30.</p><div id="elDays"></div></section>
   <section id="sezOra" hidden><h2>A che ora?</h2><div class="slots" id="elSlots"></div></section>
   <section id="sezDati" hidden>
    <h2>I tuoi dati</h2>
@@ -229,9 +261,11 @@ setTimeout(chiudi,7000);})();
   <button class="cta" id="btnEntra">Entra</button>
  </div>
  <div id="elenco" hidden>
-  <header class="hero"><div><h1>Appuntamenti</h1></div></header>
-  <div id="calA"></div>
-  <div id="lista"></div>
+  <header class="hero"><div><h1 id="aTit">Appuntamenti</h1></div></header>
+  <nav class="tabs" id="aTabs"><button data-v="app" aria-pressed="true">Appuntamenti</button><button data-v="imp" aria-pressed="false">Impostazioni</button></nav>
+  <div id="vApp"><div id="calA"></div><div id="lista"></div></div>
+  <div id="vImp" hidden><div id="iBody"></div>
+   <div class="isave"><span id="iAvv" class="hint" style="margin:0"></span><p class="err" id="iErr" role="alert" style="margin:0"></p><div class="isb"><button class="link" id="iAnnulla">Annulla modifiche</button><button class="cta" id="iSalva">Salva impostazioni</button></div></div></div>
  </div>
 </main>
 
@@ -267,17 +301,35 @@ import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmail
 import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyC59ymVazp-_GIT5kI-O6HL0hLUi7KPvLc',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
-const SV=[
+const SV0=[
  {id:'man',n:'Manicure',t:'Mani curate e unghie perfette',c:'#E8A0B4',sub:[
-  {id:'semi',n:'Semipermanente',d:60},
+  {id:'semi',n:'Semipermanente',l:'Semipermanente',d:60},
   {id:'gel',n:'Copertura gel',sub:[{id:'gel1',n:'Monocolore',l:'Copertura gel, monocolore',d:90},{id:'gel2',n:'Con decori',l:'Copertura gel, con decori',d:120}]},
   {id:'ric',n:'Ricostruzione',sub:[{id:'ric1',n:'Semplice',l:'Ricostruzione semplice',d:120},{id:'ric2',n:'Con nail art',l:'Ricostruzione con nail art',d:150}]}]},
  {id:'cer',n:'Trucco cerimonia',t:'Cresime, matrimoni, serate',d:60,c:'#9B4F7A',app:true},
  {id:'spo',n:'Trucco sposa',t:'Il giorno più importante',d:180,c:'#D9B77E',app:true}
 ];
-const FLAT={};
-(function reg(list,c){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc);else{o.c=cc;o.l=o.l||o.n;FLAT[o.id]=o;}});})(SV,'#C96A8E');
-const FINESTRE=[[570,780,'Mattina'],[930,1110,'Pomeriggio']],PASSO=30,GIORNI_APERTI=[1,2,3,4,5]; // lunedì–venerdì
+/* Impostazioni di partenza: la titolare le cambia da Area riservata > Impostazioni (salvate su Firebase: config/salone) */
+const cp=o=>JSON.parse(JSON.stringify(o));
+const CFG0={ver:0,giorni:[1,2,3,4,5],fasce:[{da:570,a:780,nome:'Mattina'},{da:930,a:1110,nome:'Pomeriggio'}],passo:30,chiusure:[],maxPren:2,ggAnnullo:2,sv:SV0};
+let CFG=cp(CFG0),SV=[],FLAT={},FINESTRE=[],PASSO=30,GIORNI_APERTI=[],CHIUSURE=[],MAX_PREN=2,GG_ANNULLO=2;
+const etichetta=(o,anc)=>anc.length===0?o.n:anc.length===1?anc[0].n+' '+o.n.toLowerCase():anc[anc.length-1].n+', '+o.n.toLowerCase();
+const pota=l=>l.map(o=>o.sub?Object.assign({},o,{sub:pota(o.sub)}):o).filter(o=>!o.sub||o.sub.length);
+function reg(list,c,anc){list.forEach(o=>{const cc=o.c||c;if(o.sub)reg(o.sub,cc,anc.concat(o));else{o.c=cc;o.l=o.l||etichetta(o,anc);FLAT[o.id]=o;}});}
+function normCfg(c){const d=cp(CFG0);if(!c||!Array.isArray(c.sv)||!Array.isArray(c.giorni)||!Array.isArray(c.fasce)||!c.fasce.length)return d;
+ c.passo=c.passo>=5?c.passo:30;c.chiusure=c.chiusure||[];c.maxPren=c.maxPren>=1?c.maxPren:2;c.ggAnnullo=c.ggAnnullo>=0?c.ggAnnullo:2;return c;}
+function applica(c){CFG=c;SV=pota(cp(c.sv));FLAT={};reg(SV,'#C96A8E',[]);
+ FINESTRE=c.fasce.map(f=>[f.da,f.a,f.nome||'']);PASSO=c.passo;GIORNI_APERTI=c.giorni;CHIUSURE=c.chiusure;MAX_PREN=c.maxPren;GG_ANNULLO=c.ggAnnullo;}
+const chiuso=k=>CHIUSURE.some(f=>k>=f.da&&k<=f.a);
+const NG=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'],ORD=[1,2,3,4,5,6,0];
+const hmS=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+const eleco=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
+function testoOrari(){const on=ORD.filter(g=>GIORNI_APERTI.includes(g)),runs=[];let cur=[];
+ ORD.forEach(g=>{if(GIORNI_APERTI.includes(g))cur.push(g);else{if(cur.length)runs.push(cur);cur=[];}});if(cur.length)runs.push(cur);
+ const gt=runs.map(r=>r.length>=3?'da '+NG[r[0]]+' a '+NG[r[r.length-1]]:eleco(r.map(g=>NG[g])));
+ const t=(gt.length?(runs.length===1&&runs[0].length>=3?'D'+gt[0].slice(1):gt.join(' e ').replace(/^./,x=>x.toUpperCase())):'Nessun giorno aperto')+', '+eleco(FINESTRE.map(f=>hmS(f[0])+'–'+hmS(f[1])))+'.';
+ return t;}
+applica(cp(CFG0));
 let PROF=null,daVer=null,ULTIMA=null,B=[],BUSY=[],unsubB=null,pronto=false,cliente=null,tentaAdmin=false,MIE=[],unsubC=null,busyOk=false,mieOk=false,bOk=false,busySlow=false,mieSlow=false,bSlow=false;
 const lento='<p class="hint" style="text-align:center;margin:26px 0">Non riesco a caricare i dati. Controlla la connessione e <button class="link" onclick="location.reload()">riprova</button>.</p>'; // B = prenotazioni complete (solo area riservata); BUSY = solo orari occupati (pubblico)
 const bRef=b=>doc(db,'bookings',String(b.id)),yRef=b=>doc(db,'busy',String(b.id));
@@ -352,7 +404,7 @@ function calBox(id,st,o,onNav,onPick){
 }
 function renderDays(){
  const t=new Date(),oggi=iso(t),max=new Date(t.getFullYear(),t.getMonth()+6,t.getDate()),mi=t.getFullYear()*12+t.getMonth(),ci=cm.y*12+cm.m;
- calBox('elDays',cm,{ok:(dt,k)=>k>oggi&&GIORNI_APERTI.includes(dt.getDay())&&dt<=max,open:1,sel:giorno,prevOff:ci<=mi,nextOff:ci>=mi+6},
+ calBox('elDays',cm,{ok:(dt,k)=>k>oggi&&GIORNI_APERTI.includes(dt.getDay())&&!chiuso(k)&&dt<=max,open:1,sel:giorno,prevOff:ci<=mi,nextOff:ci>=mi+6},
   d=>{cm=shiftM(cm,d);renderDays();},
   k=>{giorno=k;ora=null;renderDays();renderSlots();mostra('sezDati',0);$('sezOra').scrollIntoView({behavior:'smooth',block:'start'});});
 }
@@ -499,8 +551,139 @@ function vista(){
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',vista);
+/* ===== Impostazioni: orari, chiusure, trattamenti, regole ===== */
+let DR=null,sporco=false,pAuth=false,pCfg=false;
+const tryPronto=()=>{if(pAuth&&pCfg&&window.nmSplashPronto)nmSplashPronto();};
+setTimeout(()=>{pCfg=true;tryPronto();},3000);
+const nid=()=>'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const PAL=['#E8A0B4','#C96A8E','#9B4F7A','#D9B77E','#B5386B','#8E7CC3'];
+const hmv=m=>hm(m);
+const nodo=p=>{let l=DR.sv,o=null;String(p).split('.').forEach(i=>{o=l[+i];l=o&&o.sub;});return o;};
+const listaDi=p=>{const a=String(p).split('.').map(Number);a.pop();let l=DR.sv;a.forEach(i=>{l=l[i].sub;});return l;};
+function rNodo(o,p,lv,anc){
+ const foglia=!o.sub,top=lv===0,c=top?o.c:null;
+ let h=`<div class="nd" ${top?`style="--c:${esc(o.c||'#C96A8E')}"`:''}><div class="ic"><div class="nh">${top?`<label class="cl">Colore<input type="color" data-f="n-c" data-p="${p}" value="${esc(o.c||'#C96A8E')}"></label>`:''}<label>${foglia?'Trattamento':'Gruppo'}<input data-f="n-n" data-p="${p}" value="${esc(o.n)}" maxlength="60"></label>${foglia?`<label class="mn">Minuti<input type="number" inputmode="numeric" min="5" max="480" step="5" data-f="n-d" data-p="${p}" value="${o.d||''}"></label>`:''}</div>`;
+ if(top)h+=`<label>Descrizione breve (facoltativa)<input data-f="n-t" data-p="${p}" value="${esc(o.t||'')}" maxlength="80"></label>`;
+ if(foglia&&anc.length)h+=`<label>Nome nei messaggi (facoltativo)<input data-f="n-l" data-p="${p}" value="${esc(o.l||'')}" placeholder="${esc(etichetta(o,anc))}" maxlength="80"></label>`;
+ if(foglia)h+=`<label class="chk"><input type="checkbox" data-f="n-app" data-p="${p}" ${o.app?'checked':''}><span>Solo su appuntamento: la cliente invia una richiesta e la ricontatti tu</span></label>`;
+ h+=`<div class="azn"><button class="link sm" data-f="n-up" data-p="${p}">↑ Su</button><button class="link sm" data-f="n-dn" data-p="${p}">↓ Giù</button>`;
+ if(!foglia)h+=`<button class="link sm" data-f="n-addl" data-p="${p}">+ Aggiungi opzione</button>${lv<1?`<button class="link sm" data-f="n-addg" data-p="${p}">+ Aggiungi gruppo</button>`:''}`;
+ else if(lv<2)h+=`<button class="link sm" data-f="n-split" data-p="${p}">Dividi in opzioni</button>`;
+ h+=`<button class="link sm no" data-f="n-del" data-p="${p}">Elimina</button></div></div>`;
+ if(!foglia)h+=o.sub.map((x,i)=>rNodo(x,p+'.'+i,lv+1,anc.concat(o))).join('');
+ return h+'</div>';
+}
+function renderImp(){
+ const d=DR,GN=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+ const gg=ORD.map(g=>`<button class="slot sm" data-f="g-tog" data-g="${g}" aria-pressed="${d.giorni.includes(g)}">${GN[g]}</button>`).join('');
+ const fa=d.fasce.map((f,i)=>`<div class="rowt"><label>Nome<input data-f="f-nome" data-i="${i}" value="${esc(f.nome||'')}" maxlength="20"></label><label>Dalle<input type="time" step="300" data-f="f-da" data-i="${i}" value="${hmv(f.da)}"></label><label>Alle<input type="time" step="300" data-f="f-a" data-i="${i}" value="${hmv(f.a)}"></label><button class="link no" data-f="f-del" data-i="${i}" aria-label="Togli fascia">Togli</button></div>`).join('');
+ const ch=d.chiusure.map((f,i)=>`<div class="rowt"><label>Dal<input type="date" data-f="c-da" data-i="${i}" value="${esc(f.da)}"></label><label>Al<input type="date" data-f="c-a" data-i="${i}" value="${esc(f.a)}"></label><button class="link no" data-f="c-del" data-i="${i}">Togli</button></div>`).join('');
+ const PS=[10,15,20,30,45,60];
+ $('iBody').innerHTML=`<div class="imp"><p class="hint" style="margin-top:14px">Le modifiche valgono per tutte le clienti appena premi “Salva impostazioni”. Gli appuntamenti già fissati restano dove sono.</p>
+  <h3>Giorni e orari</h3>
+  <div class="ic"><p class="hint" style="margin:0 0 8px">Giorni in cui si prenota</p><div class="slots" style="margin-bottom:14px">${gg}</div>
+   <p class="hint" style="margin:0 0 8px">Fasce orarie (ogni fascia è un blocco di appuntamenti)</p>${fa||'<p class="hint">Nessuna fascia: aggiungine una.</p>'}<button class="link sm" data-f="f-add">+ Aggiungi fascia</button>
+   <label style="margin-top:14px">Un orario ogni<select data-f="passo">${PS.map(x=>`<option value="${x}" ${d.passo===x?'selected':''}>${x} minuti</option>`).join('')}</select></label></div>
+  <h3>Chiusure e ferie</h3>
+  <div class="ic">${ch||'<p class="hint" style="margin:0 0 8px">Nessuna chiusura programmata.</p>'}<button class="link sm" data-f="c-add">+ Aggiungi chiusura</button></div>
+  <h3>Trattamenti</h3>
+  <p class="hint">Le voci con i colori sono quelle che la cliente vede per prime. Dentro puoi mettere opzioni e gruppi.</p>
+  ${d.sv.map((o,i)=>rNodo(o,String(i),0,[])).join('')}
+  <div class="azn" style="margin-top:12px"><button class="link sm" data-f="sv-add">+ Nuovo trattamento</button><button class="link sm" data-f="sv-addg">+ Nuova categoria con opzioni</button></div>
+  <h3>Regole di prenotazione</h3>
+  <div class="ic"><label>Prenotazioni attive al massimo per cliente<select data-f="maxp">${[1,2,3,4,5,6,8,10].map(x=>`<option value="${x}" ${d.maxPren===x?'selected':''}>${x}</option>`).join('')}</select></label>
+   <label>Si può annullare online fino a<select data-f="ggan">${[0,1,2,3,5,7].map(x=>`<option value="${x}" ${d.ggAnnullo===x?'selected':''}>${x===0?'il giorno stesso':x===1?'1 giorno prima':x+' giorni prima'}</option>`).join('')}</select></label></div></div>`;
+}
+function segna(){sporco=true;$('iAvv').textContent='Modifiche non ancora salvate';$('iErr').textContent='';}
+async function impEv(e){
+ const t=e.target,f=t.dataset&&t.dataset.f;if(!f||!DR)return;
+ const i=+t.dataset.i,g=+t.dataset.g,p=t.dataset.p,val=t.type==='checkbox'?t.checked:t.value;let ri=false;
+ const ora5=k=>{const m=(String(val).split(':').map(Number));return isNaN(m[0])||isNaN(m[1])?null:m[0]*60+m[1];};
+ switch(f){
+  case 'g-tog':{const k=DR.giorni.indexOf(g);k<0?DR.giorni.push(g):DR.giorni.splice(k,1);ri=true;break;}
+  case 'f-nome':DR.fasce[i].nome=val;break;
+  case 'f-da':{const m=ora5();if(m!=null)DR.fasce[i].da=m;break;}
+  case 'f-a':{const m=ora5();if(m!=null)DR.fasce[i].a=m;break;}
+  case 'f-add':{const u=DR.fasce[DR.fasce.length-1];DR.fasce.push({nome:'Fascia '+(DR.fasce.length+1),da:u?Math.min(u.a+60,1200):540,a:u?Math.min(u.a+240,1260):780});ri=true;break;}
+  case 'f-del':DR.fasce.splice(i,1);ri=true;break;
+  case 'passo':DR.passo=+val;break;
+  case 'c-add':{const o=iso(new Date());DR.chiusure.push({da:o,a:o});ri=true;break;}
+  case 'c-da':DR.chiusure[i].da=val;break;
+  case 'c-a':DR.chiusure[i].a=val;break;
+  case 'c-del':DR.chiusure.splice(i,1);ri=true;break;
+  case 'maxp':DR.maxPren=+val;break;
+  case 'ggan':DR.ggAnnullo=+val;break;
+  case 'sv-add':DR.sv.push({id:nid(),n:'Nuovo trattamento',t:'',c:PAL[DR.sv.length%PAL.length],d:60});ri=true;break;
+  case 'sv-addg':DR.sv.push({id:nid(),n:'Nuova categoria',t:'',c:PAL[DR.sv.length%PAL.length],sub:[{id:nid(),n:'Nuova opzione',d:60}]});ri=true;break;
+  default:{
+   if(f.indexOf('n-')!==0)return;const o=nodo(p);if(!o)return;
+   if(f==='n-n')o.n=val;
+   else if(f==='n-c')o.c=val;
+   else if(f==='n-t'){if(val)o.t=val;else delete o.t;}
+   else if(f==='n-l'){if(val)o.l=val;else delete o.l;}
+   else if(f==='n-d')o.d=parseInt(val,10)||0;
+   else if(f==='n-app'){if(val)o.app=true;else delete o.app;}
+   else if(f==='n-addl'){o.sub.push({id:nid(),n:'Nuova opzione',d:60});ri=true;}
+   else if(f==='n-addg'){o.sub.push({id:nid(),n:'Nuovo gruppo',sub:[{id:nid(),n:'Nuova opzione',d:60}]});ri=true;}
+   else if(f==='n-split'){const x={id:nid(),n:'Opzione 1',d:o.d||60};if(o.app)x.app=true;delete o.d;delete o.app;delete o.l;o.sub=[x];ri=true;}
+   else if(f==='n-up'||f==='n-dn'){const l=listaDi(p),k=+String(p).split('.').pop(),j=f==='n-up'?k-1:k+1;if(j<0||j>=l.length)return;[l[k],l[j]]=[l[j],l[k]];ri=true;}
+   else if(f==='n-del'){if(!await dialogo('Eliminare?','“'+o.n+'”'+(o.sub?' e tutte le sue opzioni':'')+' sparirà dal sito. Gli appuntamenti già fissati restano in agenda.','Sì, elimina','No'))return;listaDi(p).splice(+String(p).split('.').pop(),1);ri=true;}
+   else return;
+  }
+ }
+ segna();if(ri)renderImp();
+}
+function validaImp(d){
+ if(!d.giorni.length)return 'Scegli almeno un giorno in cui si prenota.';
+ if(!d.fasce.length)return 'Serve almeno una fascia oraria.';
+ for(const f of d.fasce){if(!(f.a>f.da))return 'In una fascia l’orario finale deve essere dopo quello iniziale.';if(f.da%5||f.a%5)return 'Gli orari devono essere multipli di 5 minuti.';}
+ const o=d.fasce.slice().sort((a,b)=>a.da-b.da);for(let k=1;k<o.length;k++)if(o[k].da<o[k-1].a)return 'Due fasce orarie si sovrappongono.';
+ for(const c of d.chiusure){if(!c.da||!c.a)return 'Completa le date delle chiusure.';if(c.a<c.da)return 'In una chiusura la data finale è prima di quella iniziale.';}
+ let n=0,err='';const lab=new Set();
+ (function w(l,anc){l.forEach(x=>{if(err)return;if(!x.n||!x.n.trim()){err='Ogni voce deve avere un nome.';return;}
+  if(x.sub){if(!x.sub.length){err='“'+x.n+'” non ha opzioni: aggiungine una o eliminalo.';return;}w(x.sub,anc.concat(x));}
+  else{n++;if(!(x.d>=5&&x.d<=480&&x.d%5===0)){err='La durata di “'+x.n+'” deve essere tra 5 e 480 minuti, a passi di 5.';return;}
+   const e=(x.l||etichetta(x,anc)).trim().toLowerCase();if(lab.has(e)){err='Due trattamenti hanno lo stesso nome: “'+(x.l||etichetta(x,anc))+'”.';return;}lab.add(e);}});})(d.sv,[]);
+ if(err)return err;if(!n)return 'Serve almeno un trattamento.';return '';
+}
+async function salvaImp(){
+ const d=cp(DR);
+ (function t(l){l.forEach(x=>{x.n=x.n.trim();if(x.t)x.t=x.t.trim();if(x.l)x.l=x.l.trim();if(x.sub)t(x.sub);});})(d.sv);
+ d.fasce.forEach(f=>{f.nome=(f.nome||'').trim();});
+ const er=validaImp(d);if(er){$('iErr').textContent=er;return;}
+ const bt=$('iSalva');bt.disabled=true;$('iErr').textContent='';
+ try{d.ver=(CFG.ver||0)+1;d.agg=Date.now();const b=writeBatch(db);b.set(doc(db,'config','salone'),d);await b.commit();
+  sporco=false;$('iAvv').textContent='Salvato ✓';setTimeout(()=>{if(!sporco)$('iAvv').textContent='';},3000);cfgCambiata(d);DR=cp(CFG);renderImp();}
+ catch(e){console.error(e);$('iErr').textContent=e.code==='permission-denied'?'Non posso salvare: aggiorna le regole di Firestore (vedi istruzioni).':'Non riesco a salvare. Controlla la connessione e riprova.';}
+ bt.disabled=false;
+}
+function cfgCambiata(c){ // arriva una nuova configurazione: aggiorna sito clienti e (se serve) l’area riservata
+ c=normCfg(c);if(JSON.stringify(c)===JSON.stringify(CFG))return;
+ const prima=sv&&sv.id;applica(c);sv=prima?FLAT[prima]||null:null;
+ $('hOrari').textContent=testoOrari();renderSv();
+ if(!sv){sv=null;giorno=null;ora=null;['sezGiorno','sezOra','sezDati'].forEach(i=>mostra(i,0));}
+ else{
+  if(!$('sezGiorno').hidden)renderDays();
+  if(!sv.app&&giorno&&!$('sezOra').hidden){ if(!GIORNI_APERTI.includes(new Date(giorno+'T12:00').getDay())||chiuso(giorno)){giorno=null;ora=null;mostra('sezOra',0);mostra('sezDati',0);renderDays();}else renderSlots(); }
+  if(!sv.app&&ora!=null&&!$('sezDati').hidden){ora=null;mostra('sezDati',0);avviso('Gli orari sono stati aggiornati: scegli di nuovo l’ora.');}
+ }
+ if(admin&&DR&&!sporco&&!$('vImp').hidden){DR=cp(CFG);renderImp();}
+}
+function tabAdmin(v){
+ mostra('vApp',v==='app');mostra('vImp',v==='imp');$('aTit').textContent=v==='imp'?'Impostazioni':'Appuntamenti';
+ document.querySelectorAll('#aTabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
+ if(v==='imp'){if(!DR||!sporco){DR=cp(CFG);sporco=false;}renderImp();}
+ window.scrollTo(0,0);
+}
+document.querySelectorAll('#aTabs button').forEach(b=>b.onclick=()=>tabAdmin(b.dataset.v));
+$('vImp').addEventListener('input',impEv);
+$('vImp').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(b)impEv({target:b});});
+$('iSalva').onclick=salvaImp;
+$('iAnnulla').onclick=()=>{DR=cp(CFG);sporco=false;$('iAvv').textContent='';$('iErr').textContent='';renderImp();};
+
 onSnapshot(collection(db,'busy'),s=>{BUSY=s.docs.map(d=>d.data());busyOk=true;if(sv&&!sv.app&&giorno&&!$('sezOra').hidden)renderSlots();},()=>{busyOk=true;if(sv&&!sv.app&&giorno&&!$('sezOra').hidden)renderSlots();});
 
+onSnapshot(doc(db,'config','salone'),sn=>{if(sn.exists())cfgCambiata(sn.data());pCfg=true;tryPronto();},()=>{pCfg=true;tryPronto();}); // orari e trattamenti decisi dalla titolare
 setTimeout(()=>{if(!busyOk){busySlow=true;if(sv&&!sv.app&&giorno&&!$('sezOra').hidden)renderSlots();}},8000);
 function aggiornaCliente(){
  mostra('datiAcc',!cliente);mostra('datiForm',!!cliente);mostra('loginBox',!daVer);mostra('verBox',!!daVer);
@@ -593,7 +776,7 @@ function chiediCalendario(b){
  $('calqAltro').onclick=()=>{$('calq').hidden=true;scaricaIcs(b);};
  $('calqNo').onclick=()=>{$('calq').hidden=true;};
 }
-const MAX_PREN=2,GG_ANNULLO=2; // massimo prenotazioni attive per account; giorni minimi prima per annullare
+/* MAX_PREN (prenotazioni attive per account) e GG_ANNULLO (giorni minimi per annullare) vengono dalle impostazioni */
 function giorniA(data){const a=new Date(iso(new Date())+'T00:00:00'),d=new Date(data+'T00:00:00');return Math.round((d-a)/86400000);}
 function annullabile(b){return !b.data||giorniA(b.data)>=GG_ANNULLO;}
 async function annullaMia(b){
@@ -647,9 +830,9 @@ onAuthStateChanged(auth,async u=>{
  if(cliente)setTimeout(()=>{if(!mieOk){mieSlow=true;renderMie();}},8000);
  if(ok)setTimeout(()=>{if(!bOk){bSlow=true;renderLista();}},8000);
  aggiornaCliente();vista();
- if(window.nmSplashPronto)nmSplashPronto();
+ pAuth=true;tryPronto();
 });
-renderSv();vista();
+$('hOrari').textContent=testoOrari();renderSv();vista();
 /* Invito a installare l’app: Android = pulsante Installa, iPhone = Safari > Aggiungi a Home */
 (function(){
  const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(ua.includes('Macintosh')&&navigator.maxTouchPoints>1);
