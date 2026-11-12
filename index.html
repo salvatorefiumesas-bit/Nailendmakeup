@@ -47,7 +47,7 @@
 *,*::before,*::after{box-sizing:inherit}
 *{-webkit-tap-highlight-color:transparent}
 button,a{touch-action:manipulation}
-html{background:var(--bg);scroll-padding-top:var(--sat);font-size:var(--fs)}
+html{overflow-x:hidden;background:var(--bg);scroll-padding-top:var(--sat);font-size:var(--fs)}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 1rem/1.5 "Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:"Fraunces",Georgia,serif;color:var(--head);font-weight:400;margin:0;letter-spacing:-.02em}
 button{font:inherit;color:inherit}
@@ -97,8 +97,8 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 .gl{margin:18px 0 8px;color:var(--mute);font-weight:600;font-size:.9rem;grid-column:1/-1}
 
 /* Menu iniziale */
-.menu{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:4px}
-.mt{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;border:0;background:var(--c);color:var(--ink);text-align:left;cursor:pointer;transition:transform .12s}
+.menu{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:4px}
+.mt{position:relative;min-width:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;border:0;background:var(--c);color:var(--ink);text-align:left;cursor:pointer;transition:transform .12s}
 .mt:active{transform:scale(.97)}
 .mt svg{display:block;flex:none;color:var(--head)}
 .mt.big{grid-column:span 3;aspect-ratio:1;padding:18px;border-radius:36px}
@@ -111,13 +111,13 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 .mt .mn:empty{display:none}
 
 /* Categorie: quadrati grandi */
-#elSv{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
-@media(min-width:820px){#elSv{grid-template-columns:repeat(3,1fr);gap:18px}}
-@media(min-width:1200px){#elSv{grid-template-columns:repeat(4,1fr)}}
-.tile{position:relative;display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:1;padding:18px;border:0;border-radius:36px;background:color-mix(in srgb,var(--c) 30%,var(--surf));text-align:left;cursor:pointer;color:var(--ink);transition:transform .12s}
+#elSv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:8px}
+@media(min-width:820px){#elSv{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}}
+@media(min-width:1200px){#elSv{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{position:relative;min-width:0;display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:1;padding:18px;border:0;border-radius:36px;background:color-mix(in srgb,var(--c) 30%,var(--surf));text-align:left;cursor:pointer;color:var(--ink);transition:transform .12s}
 .tile:active{transform:scale(.97)}
 .tile .tic{width:38px;height:46px;border-radius:19px 19px 7px 7px;background:var(--c);opacity:.85;flex:none;box-shadow:inset 0 -7px 0 rgba(184,147,90,.5)}
-.tile .tt b{display:block;font:400 1.45rem/1.1 "Fraunces",Georgia,serif;letter-spacing:-.02em;color:var(--head)}
+.tile .tt b{display:block;overflow-wrap:anywhere;font:400 1.45rem/1.1 "Fraunces",Georgia,serif;letter-spacing:-.02em;color:var(--head)}
 .tile .tt small{display:block;margin-top:4px;font-size:.82rem;opacity:.75}
 .tile .tn{position:absolute;top:16px;right:16px;min-width:30px;height:30px;padding:0 8px;border-radius:99px;background:var(--pri);color:var(--onpri);font-weight:700;display:grid;place-items:center}
 .tile .tn:empty{display:none}
@@ -155,7 +155,7 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 .orw b{text-align:right}
 
 /* Orari e calendario */
-.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 @media(min-width:820px){.slots{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
 .slot{display:flex;align-items:center;justify-content:center;padding:12px 6px;border-radius:14px;background:var(--surf);border:1.5px solid var(--line);font-weight:600;cursor:pointer;color:inherit;transition:background .15s,border-color .15s}
 .slot:active{background:var(--soft)}
@@ -165,7 +165,7 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 .calh b{font:400 1.6rem "Fraunces",Georgia,serif;color:var(--head);text-transform:capitalize}
 .calh button{width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);font-size:1.3rem;line-height:1;cursor:pointer;color:var(--head)}
 .calh button:disabled{opacity:.3;cursor:not-allowed}
-.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
 .cg .wd{font-size:.8rem;font-weight:600;color:var(--mute);padding:6px 0}
 .cg button{aspect-ratio:1;border:0;border-radius:50%;background:none;font-weight:600;cursor:pointer;color:var(--ink);position:relative}
 @media(hover:hover){.cg button:hover:not(:disabled):not([aria-pressed="true"]){background:var(--soft)}}
@@ -179,7 +179,7 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 label,.lab{display:block;font-weight:500;font-size:.88rem;color:var(--mute);margin:0 0 14px}
 input,textarea,select{display:block;width:100%;margin-top:6px;padding:14px;font:inherit;font-size:1rem;color:var(--ink);background:var(--surf);border:1.5px solid var(--line);border-radius:14px}
 input:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 15%,transparent)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .err{color:var(--wait);font-weight:500;min-height:1.4em;margin:0 0 6px}
 .cta{display:block;width:100%;max-width:440px;margin:24px auto 0;padding:16px;border:0;border-radius:999px;background:var(--grad);color:#fff;font-weight:600;font-size:1.02rem;cursor:pointer;box-shadow:0 14px 26px -16px var(--acc);transition:transform .12s}
 .cta:active{transform:scale(.985)}
@@ -454,7 +454,7 @@ const firebaseConfig={apiKey:'AIzaSyC59ymVazp-_GIT5kI-O6HL0hLUi7KPvLc',authDomai
 const APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const fbApp=initializeApp(firebaseConfig),auth=getAuth(fbApp);
 let db;if(APP){try{db=initializeFirestore(fbApp,{localCache:persistentLocalCache()});}catch(e){db=getFirestore(fbApp);}}else db=getFirestore(fbApp);
-if(APP){document.documentElement.classList.add('app');const g=i=>document.getElementById(i);g('btnGoogle').hidden=true;g('oppEmail').hidden=true;g('loginTxt').textContent='Per prenotare accedi con la tua email e una password: così ritrovi le tue prenotazioni e non devi reinserire i dati.';}
+if(APP){document.documentElement.classList.add('in-app');const g=i=>document.getElementById(i);g('btnGoogle').hidden=true;g('oppEmail').hidden=true;g('loginTxt').textContent='Per prenotare accedi con la tua email e una password: così ritrovi le tue prenotazioni e non devi reinserire i dati.';}
 const SV0=[
  {id:'man',n:'Manicure',t:'Mani curate e unghie perfette',c:'#E8A0B4',sub:[
   {id:'semi',n:'Semipermanente',l:'Semipermanente',d:60},
