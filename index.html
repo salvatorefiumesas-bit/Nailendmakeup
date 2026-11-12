@@ -109,6 +109,8 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 .mt.sm b{font-weight:700;font-size:.82rem;line-height:1.15}
 .mt .mn{position:absolute;top:10px;right:10px;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:var(--pri);color:var(--onpri);font-weight:700;font-size:.8rem;display:grid;place-items:center}
 .mt .mn:empty{display:none}
+/* Carattere di sistema ingrandito: le parole lunghe vanno a capo con il trattino e niente esce dai riquadri */
+.mt b,.tile .tt b,.tile .tt small,.sv .t b,.lrow b,.card h2{max-width:100%;overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}
 
 /* Categorie: quadrati grandi */
 #elSv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:8px}
