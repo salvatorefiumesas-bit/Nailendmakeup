@@ -1078,6 +1078,25 @@ if(APP){
   if(PAG!=='ph'){indietro();return;}
   AppNat.exitApp();
  });
+ /* Scarica l'aggiornamento dentro l'app e apre l'installazione di Android (niente browser) */
+ const AGG=window.Capacitor.Plugins&&window.Capacitor.Plugins.Aggiorna;
+ async function aggiornaOra(url){
+  if(!AGG){location.href=url;return;}
+  const chiudi=()=>{$('dlg').hidden=true;$('dlgOk').hidden=false;};
+  try{
+   let ok=(await AGG.puoInstallare()).ok;
+   if(!ok){
+    if(!await dialogo('Un permesso, una volta sola','Per installare gli aggiornamenti Android chiede di consentirlo a questa app. Nella schermata che si apre attiva “Consenti da questa fonte”, poi torna indietro.','Apri impostazioni','Annulla'))return;
+    await AGG.apriPermesso();
+    await new Promise(r=>{const f=()=>{if(document.visibilityState==='visible'){document.removeEventListener('visibilitychange',f);r();}};document.addEventListener('visibilitychange',f);});
+    ok=(await AGG.puoInstallare()).ok;
+    if(!ok){await avviso('Senza quel permesso l’aggiornamento non si può installare. Puoi riprovare la prossima volta che apri l’app.');return;}
+   }
+   $('dlgT').textContent='Scarico l’aggiornamento…';$('dlgP').textContent='0%';$('dlgOk').hidden=true;$('dlgNo').hidden=true;$('dlg').hidden=false;
+   const h=await AGG.addListener('progresso',e=>{$('dlgP').textContent=e.p+'%';});
+   try{await AGG.installa({url});}finally{h.remove();chiudi();}
+  }catch(e){chiudi();await avviso('Aggiornamento non riuscito ('+String(e&&e.message||e)+'). Controlla la connessione e riprova.');}
+ }
  (async function(){
   const REPO='salvatorefiumesas-bit/Nailendmakeup';
   let mia=0;try{mia=(await (await fetch('versione.json',{cache:'no-store'})).json()).v||0;}catch(e){return;}
@@ -1091,10 +1110,10 @@ if(APP){
     let no='';try{no=sessionStorage.getItem('aggNo')||'';}catch(e){}
     if(n>mia&&no!==String(n)){
      aperto=true;
-     const si=await dialogo('Nuova versione disponibile','È uscita la versione 1.'+n+' dell’app (tu hai la 1.'+mia+'). Tocca “Aggiorna”: si scarica il file, poi aprilo e tocca Installa. I tuoi dati restano.','Aggiorna','Più tardi');
-     aperto=false;
-     if(si)location.href='https://github.com/'+REPO+'/releases/latest/download/NailsMakeup.apk';
+     const si=await dialogo('Nuova versione disponibile','È uscita la versione 1.'+n+' dell’app (tu hai la 1.'+mia+'). Tocca “Aggiorna”: l’app la scarica da sola, poi conferma con “Aggiorna” nella schermata di Android. I tuoi dati restano.','Aggiorna','Più tardi');
+     if(si)await aggiornaOra('https://github.com/'+REPO+'/releases/download/app-v1.'+n+'/NailsMakeup.apk');
      else{try{sessionStorage.setItem('aggNo',String(n));}catch(e){}}
+     aperto=false;
     }
    }catch(e){}
   };
