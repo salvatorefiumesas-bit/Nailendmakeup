@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "205109970124",
+    "project_id": "nailsendmakeup",
+    "storage_bucket": "nailsendmakeup.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205109970124:android:bbaeb11c30ed1fd2842e69",
+        "android_client_info": {
+          "package_name": "it.nailsandmakeup.prenota"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "205109970124-bee2puuisfvto2p7e4blrhip7vlm3vof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_MfETBxNAutvD1SjLNYq9KNO-5dKAK5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "205109970124-bee2puuisfvto2p7e4blrhip7vlm3vof.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

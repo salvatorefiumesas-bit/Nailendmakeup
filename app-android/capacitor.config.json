@@ -9,6 +9,12 @@
   "plugins": {
     "SystemBars": {
       "insetsHandling": "css"
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
     }
   }
 }

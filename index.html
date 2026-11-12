@@ -447,14 +447,17 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 </script>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signInWithPopup,signInWithCredential,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import{getFirestore,initializeFirestore,persistentLocalCache,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyC59ymVazp-_GIT5kI-O6HL0hLUi7KPvLc',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
 /* Nell'app Android i dati restano salvati sul telefono (cache permanente): l'agenda si vede anche senza internet */
 const APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+if(APP)document.documentElement.classList.add('in-app');
 const fbApp=initializeApp(firebaseConfig),auth=getAuth(fbApp);
 let db;if(APP){try{db=initializeFirestore(fbApp,{localCache:persistentLocalCache()});}catch(e){db=getFirestore(fbApp);}}else db=getFirestore(fbApp);
-if(APP){document.documentElement.classList.add('in-app');const g=i=>document.getElementById(i);g('btnGoogle').hidden=true;g('oppEmail').hidden=true;g('loginTxt').textContent='Per prenotare accedi con la tua email e una password: così ritrovi le tue prenotazioni e non devi reinserire i dati.';}
+/* Accesso con Google nell'app: tramite Android (il riquadro con gli account del telefono) */
+const FA=APP&&window.Capacitor.Plugins?window.Capacitor.Plugins.FirebaseAuthentication:null;
+if(APP&&!FA){document.documentElement.classList.add('in-app');const g=i=>document.getElementById(i);g('btnGoogle').hidden=true;g('oppEmail').hidden=true;g('loginTxt').textContent='Per prenotare accedi con la tua email e una password: così ritrovi le tue prenotazioni e non devi reinserire i dati.';}
 const SV0=[
  {id:'man',n:'Manicure',t:'Mani curate e unghie perfette',c:'#E8A0B4',sub:[
   {id:'semi',n:'Semipermanente',l:'Semipermanente',d:60},
@@ -889,9 +892,12 @@ function aggiornaCliente(){
 }
 async function accediGoogle(){
  $('errG').textContent='';
- try{await signInWithPopup(auth,new GoogleAuthProvider());}
+ try{
+  if(FA){const r=await FA.signInWithGoogle();await signInWithCredential(auth,GoogleAuthProvider.credential(r.credential&&r.credential.idToken));}
+  else await signInWithPopup(auth,new GoogleAuthProvider());}
  catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
-  const m='Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)avviso(m);}
+  if(FA&&/cancel/i.test(String(e&&e.message)))return; // la cliente ha chiuso la scelta dell'account
+  const m=FA?'Accesso con Google non riuscito ('+String(e&&(e.code||e.message)||'errore')+'). Riprova o accedi con email e password.':'Accesso non riuscito. Se hai installato l’app, prova ad aprire la pagina dal browser.';$('errG').textContent=m;if($('datiAcc').hidden)avviso(m);}
 }
 $('btnGoogle').onclick=accediGoogle;
 const erroreAuth=e=>{const c=e&&e.code;
