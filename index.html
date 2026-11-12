@@ -1033,7 +1033,7 @@ onAuthStateChanged(auth,async u=>{
 $('hOrari').textContent=testoOrari();renderSv();vista();try{history.replaceState({nm:1},'');}catch(e){}
 /* Solo nell'app Android: promemoria programmati sul telefono (senza server).
    Cliente: la sera prima alle 18:00 (o 2 ore prima, se ha prenotato dopo le 18 del giorno prima).
-   Titolare: la sera prima alle 20:00, riepilogo degli appuntamenti del giorno dopo.
+   Titolare: la sera prima alle 21:00, riepilogo degli appuntamenti del giorno dopo.
    Si riprogrammano ogni volta che arrivano dati nuovi (app aperta). */
 const LN=APP&&window.Capacitor.Plugins?window.Capacitor.Plugins.LocalNotifications:null;
 let lnPerm=null,lnT=null;
@@ -1049,7 +1049,7 @@ function programmaPromemoria(){
   const alle=(data,giorniPrima,min)=>{const [y,m,d]=data.split('-').map(Number);return new Date(y,m-1,d-giorniPrima,0,min);};
   if(admin&&bOk){
    const G={};B.forEach(b=>{if(!b.annullato&&b.data&&b.data>oggi)(G[b.data]=G[b.data]||[]).push(b);});
-   Object.keys(G).sort().forEach(d=>{const at=alle(d,1,20*60);if(at.getTime()<=ora)return;
+   Object.keys(G).sort().forEach(d=>{const at=alle(d,1,21*60);if(at.getTime()<=ora)return;
     const l=G[d].sort((a,b)=>a.ora-b.ora);
     L.push({t:'Domani: '+l.length+(l.length===1?' appuntamento':' appuntamenti'),b:l.map(x=>hm(x.ora)+' '+x.nome+' '+x.cogn+' – '+x.sv).join('\n'),at});});
   }else if(cliente&&mieOk){
