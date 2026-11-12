@@ -2,7 +2,7 @@
    Strategia: rete per prima (così index.html è sempre l'ultima versione),
    cache solo come riserva se manca la connessione.
    Per forzare un aggiornamento in futuro basta cambiare VERSIONE. */
-const VERSIONE = 'nm-v3';
+const VERSIONE = 'nm-v4';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
