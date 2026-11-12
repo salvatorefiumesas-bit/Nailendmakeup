@@ -28,7 +28,8 @@
  --barra:rgba(250,244,246,.94);--vel:rgba(42,22,38,.5);
  --fs:16px;
  color-scheme:light;
- box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+ --sat:max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px));--sab:max(env(safe-area-inset-bottom,0px),var(--safe-area-inset-bottom,0px));
+ box-sizing:border-box;padding-top:var(--sat);padding-bottom:var(--sab)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
  --bg:#170C16;--surf:#261424;--ink:#F6EAF1;--mute:#BBA3B5;--line:#432B40;--soft:#33192F;--head:#F0D3E3;
  --acc:#E0709B;--onacc:#2A1626;--pri:#E0709B;--onpri:#2A1626;--gold:#D9B77E;--ok:#6FCF9F;--wait:#FF8A80;
@@ -46,7 +47,7 @@
 *,*::before,*::after{box-sizing:inherit}
 *{-webkit-tap-highlight-color:transparent}
 button,a{touch-action:manipulation}
-html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px);font-size:var(--fs)}
+html{background:var(--bg);scroll-padding-top:var(--sat);font-size:var(--fs)}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 1rem/1.5 "Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:"Fraunces",Georgia,serif;color:var(--head);font-weight:400;margin:0;letter-spacing:-.02em}
 button{font:inherit;color:inherit}
@@ -123,7 +124,7 @@ h2{font-size:2rem;line-height:1.05;margin-bottom:14px}
 
 /* Foglio con le opzioni */
 .sheet{position:fixed;inset:0;z-index:50;background:var(--vel);display:flex;align-items:flex-end;justify-content:center}
-.shb{width:100%;max-width:560px;max-height:86vh;overflow:auto;background:var(--bg);border-radius:32px 32px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));border-top:12px solid var(--c)}
+.shb{width:100%;max-width:560px;max-height:86vh;overflow:auto;background:var(--bg);border-radius:32px 32px 0 0;padding:20px 18px calc(20px + var(--sab));border-top:12px solid var(--c)}
 @media(min-width:820px){.sheet{align-items:center}.shb{border-radius:32px;max-height:80vh}}
 .shh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
 .shh h3{font-size:1.9rem}
@@ -189,7 +190,7 @@ input:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4
 .ok{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#2F7D5B,#52B788);color:#fff;display:grid;place-items:center;font-size:36px;margin:10px 0 18px;box-shadow:0 0 0 8px color-mix(in srgb,var(--ok) 18%,transparent)}
 
 /* Barra in basso */
-#barra{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--barra);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+#barra{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px calc(12px + var(--sab));background:var(--barra);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
 @media(min-width:820px){#barra{padding-left:max(32px,calc((100vw - 900px)/2 + 32px));padding-right:max(32px,calc((100vw - 900px)/2 + 32px))}}
 @media(min-width:1200px){#barra{padding-left:calc((100vw - 1120px)/2 + 32px);padding-right:calc((100vw - 1120px)/2 + 32px)}}
 @media(min-width:1500px){#barra{padding-left:calc((100vw - 1280px)/2 + 32px);padding-right:calc((100vw - 1280px)/2 + 32px)}}
@@ -252,7 +253,7 @@ input[type=color]{padding:3px;height:48px;width:60px;cursor:pointer}
 .nh>label{flex:1;margin:0 0 12px}
 .nh>label.mn{flex:0 0 92px}
 .nh>label.cl{flex:0 0 64px}
-.isave{position:sticky;bottom:0;display:flex;flex-direction:column;gap:6px;padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));margin-top:20px;background:linear-gradient(transparent,var(--bg) 28%)}
+.isave{position:sticky;bottom:0;display:flex;flex-direction:column;gap:6px;padding:12px 0 calc(12px + var(--sab));margin-top:20px;background:linear-gradient(transparent,var(--bg) 28%)}
 .isave .err{min-height:0}
 .isb{display:flex;gap:14px;align-items:center;justify-content:flex-end}
 .isb .cta{width:auto;margin:0;padding:14px 26px}
@@ -287,7 +288,7 @@ input[type=color]{padding:3px;height:48px;width:60px;cursor:pointer}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* Caricamento iniziale + rotellina (colori Nails & Makeup) */
-#splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:env(safe-area-inset-top,0px) 24px env(safe-area-inset-bottom,0px);overflow:hidden;background:linear-gradient(140deg,#3E1A3C 0%,#6B2756 55%,#A8386A 100%);transition:opacity .5s ease,visibility .5s}
+#splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:var(--sat) 24px var(--sab);overflow:hidden;background:linear-gradient(140deg,#3E1A3C 0%,#6B2756 55%,#A8386A 100%);transition:opacity .5s ease,visibility .5s}
 #splash.out{opacity:0;visibility:hidden;pointer-events:none}
 #splash::before,#splash::after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(217,183,126,.45);pointer-events:none}
 #splash::before{width:420px;height:420px;right:-170px;top:-170px}
@@ -359,9 +360,9 @@ setTimeout(chiudi,7000);})();
    <div class="row riep" id="riep"></div>
    <div id="datiAcc" hidden>
     <div id="loginBox">
-     <p class="hint">Per prenotare accedi con Google oppure con la tua email: così ritrovi le tue prenotazioni e non devi reinserire i dati.</p>
+     <p class="hint" id="loginTxt">Per prenotare accedi con Google oppure con la tua email: così ritrovi le tue prenotazioni e non devi reinserire i dati.</p>
      <button class="cta" id="btnGoogle">Accedi con Google</button>
-     <p class="hint" style="text-align:center;margin:16px 0 6px">oppure con email e password</p>
+     <p class="hint" id="oppEmail" style="text-align:center;margin:16px 0 6px">oppure con email e password</p>
      <label>Email<input id="eMail" type="email" autocomplete="email"></label>
      <label>Password<input id="ePass" type="password" autocomplete="current-password" placeholder="almeno 6 caratteri"></label>
      <div style="display:grid;gap:6px;margin-top:4px"><button class="cta" id="btnEmailLogin" style="margin-top:0">Accedi</button><button class="link" id="btnEmailReg">Non hai un account? Registrati</button><button class="link" id="btnReset">Password dimenticata?</button></div>
@@ -447,9 +448,13 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signInWithPopup,GoogleAuthProvider,signOut}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import{getFirestore,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import{getFirestore,initializeFirestore,persistentLocalCache,collection,doc,getDoc,onSnapshot,query,where,writeBatch,getDocs}from'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyC59ymVazp-_GIT5kI-O6HL0hLUi7KPvLc',authDomain:'nailsendmakeup.firebaseapp.com',projectId:'nailsendmakeup',storageBucket:'nailsendmakeup.firebasestorage.app',messagingSenderId:'205109970124',appId:'1:205109970124:web:bab08c55d651b4a7842e69'};
-const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore();
+/* Nell'app Android i dati restano salvati sul telefono (cache permanente): l'agenda si vede anche senza internet */
+const APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const fbApp=initializeApp(firebaseConfig),auth=getAuth(fbApp);
+let db;if(APP){try{db=initializeFirestore(fbApp,{localCache:persistentLocalCache()});}catch(e){db=getFirestore(fbApp);}}else db=getFirestore(fbApp);
+if(APP){document.documentElement.classList.add('app');const g=i=>document.getElementById(i);g('btnGoogle').hidden=true;g('oppEmail').hidden=true;g('loginTxt').textContent='Per prenotare accedi con la tua email e una password: così ritrovi le tue prenotazioni e non devi reinserire i dati.';}
 const SV0=[
  {id:'man',n:'Manicure',t:'Mani curate e unghie perfette',c:'#E8A0B4',sub:[
   {id:'semi',n:'Semipermanente',l:'Semipermanente',d:60},
@@ -920,7 +925,10 @@ const calMs=(data,min)=>{const [y,m,d]=data.split('-').map(Number);return new Da
 /* Apre l'APP Google Calendar: su Android con un intent (se l'app non c'è ripiega sul sito), su iPhone con link universale nella stessa scheda */
 function apriGoogleCalendar(b){
  const web=gcalUrl(b),ua=navigator.userAgent;
- if(/Android/i.test(ua)){
+ if(APP){ /* nell'app il link si apre fuori: Android lo passa a Google Calendar */
+  const q=encodeURIComponent;
+  location.href='https://www.google.com/calendar/event?action=TEMPLATE&text='+q(b.sv+' – Nails & Makeup')+'&dates='+calDT(b.data,b.ora)+'/'+calDT(b.data,b.ora+b.dur)+'&ctz=Europe%2FRome&details='+q('Appuntamento prenotato online.');
+ }else if(/Android/i.test(ua)){
   const q=encodeURIComponent;
   /* Il Calendar accetta dai link solo www.google.com/calendar/event (BROWSABLE): l'intent INSERT verrebbe rifiutato da Chrome */
   location.href='intent://www.google.com/calendar/event?action=TEMPLATE&text='+q(b.sv+' – Nails & Makeup')+'&dates='+calDT(b.data,b.ora)+'/'+calDT(b.data,b.ora+b.dur)+'&ctz=Europe%2FRome&details='+q('Appuntamento prenotato online.')
@@ -941,6 +949,7 @@ const ANDROID=/Android/i.test(navigator.userAgent);
 const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.userAgent.includes('Macintosh')&&navigator.maxTouchPoints>1);
 const ETI_ALTRO=ANDROID?'📅 Calendario del telefono (Samsung, altri)':IOS?'🍎 Aggiungi al Calendario dell’iPhone':'🍎 Aggiungi a Calendario Apple';
 $('calApple').textContent=ETI_ALTRO;
+if(APP)$('calApple').style.display='none'; // nell'app il file .ics non si può aprire: si usa Google Calendar
 if(IOS)$('calG').style.display='none';
 $('calApple').onclick=()=>{if(ULTIMA)scaricaIcs(ULTIMA);};
 $('calG').onclick=ev=>{ev.preventDefault();if(ULTIMA)apriGoogleCalendar(ULTIMA);};
@@ -955,7 +964,7 @@ function chiediCalendario(b){
  $('calqTxt').textContent='Vuoi aggiungere l’appuntamento di '+dataLunga(b.data)+' alle '+hm(b.ora)+' a Google Calendar? Si apre già con data e ora inserite: ti basta premere Salva.'+(ANDROID?' Se non hai l’app Google Calendar, scegli “Uso un altro calendario”.':'');
  $('calq').hidden=false;
  $('calqSi').onclick=()=>{$('calq').hidden=true;apriGoogleCalendar(b);};
- $('calqAltro').hidden=!ANDROID;
+ $('calqAltro').hidden=!ANDROID||APP;
  $('calqAltro').onclick=()=>{$('calq').hidden=true;scaricaIcs(b);};
  $('calqNo').onclick=()=>{$('calq').hidden=true;};
 }
@@ -977,7 +986,7 @@ function renderMie(){
  const oggi=iso(new Date());
  const L=MIE.filter(b=>!b.annullato&&(!b.data||b.data>=oggi)).sort((a,b)=>(a.data||'9').localeCompare(b.data||'9')||(a.ora||0)-(b.ora||0));
  $('mnBadge').textContent=L.length||'';
- $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${b.data?`<small>${IOS?'':`<a href="${gcalUrl(b)}" data-gcal="${b.id}">📅 Google Calendar</a> · `}<a href="#" data-ics="${b.id}">${ANDROID?'📅 Altro calendario':IOS?'🍎 Calendario iPhone':'🍎 Apple'}</a></small>`:''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
+ $('mieLista').innerHTML=L.length?L.map(b=>`<div class="app"><div><b>${esc(b.sv)}</b><small>${b.data?dataLunga(b.data)+', ore '+hm(b.ora)+' ('+fd(b.dur)+')':'Richiesta da concordare: '+esc(b.note||'')}</small>${b.spostato?'<small class="stato">Appuntamento spostato</small>':''}${b.data?`<small>${IOS?'':`<a href="${gcalUrl(b)}" data-gcal="${b.id}">📅 Google Calendar</a> · `}${APP?'':`<a href="#" data-ics="${b.id}">${ANDROID?'📅 Altro calendario':IOS?'🍎 Calendario iPhone':'🍎 Apple'}</a>`}</small>`:''}${annullabile(b)?'':'<small>Si può annullare fino a '+GG_ANNULLO+' giorni prima: contattaci per modificarlo.</small>'}</div>${annullabile(b)?`<button class="x" data-id="${b.id}">Annulla</button>`:''}</div>`).join(''):'<p class="hint">Non hai prenotazioni in programma.</p>';
  $('mieLista').querySelectorAll('[data-gcal]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.gcal);if(b)apriGoogleCalendar(b);});
  $('mieLista').querySelectorAll('[data-ics]').forEach(k=>k.onclick=ev=>{ev.preventDefault();const b=MIE.find(z=>String(z.id)===k.dataset.ics);if(b)scaricaIcs(b);});
  $('mieLista').querySelectorAll('.x').forEach(k=>k.onclick=async()=>{
@@ -1019,7 +1028,7 @@ $('hOrari').textContent=testoOrari();renderSv();vista();try{history.replaceState
 /* Invito a installare l’app: Android = pulsante Installa, iPhone = Safari > Aggiungi a Home */
 (function(){
  const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(ua.includes('Macintosh')&&navigator.maxTouchPoints>1);
- if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;
+ if(APP||matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;
  try{if(localStorage.getItem('instChiuso')==='1')return;}catch(e){}
  const box=$('inst'),txt=$('instTxt'),btn=$('instBtn');
  const apri=(t,lab,fn)=>{txt.innerHTML=t;btn.textContent=lab||'';btn.onclick=fn||null;btn.hidden=!fn;box.hidden=false;};
@@ -1034,7 +1043,7 @@ $('hOrari').textContent=testoOrari();renderSv();vista();try{history.replaceState
   addEventListener('appinstalled',()=>{box.hidden=true;});
  }
 })();
-if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if(!APP&&'serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
 </html>

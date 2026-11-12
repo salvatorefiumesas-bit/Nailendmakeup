@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nails &amp; Makeup</string>
+    <string name="title_activity_main">Nails &amp; Makeup</string>
+    <string name="package_name">it.nailsandmakeup.prenota</string>
+    <string name="custom_url_scheme">it.nailsandmakeup.prenota</string>
+</resources>

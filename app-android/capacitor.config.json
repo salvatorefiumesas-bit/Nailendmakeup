@@ -1,0 +1,14 @@
+{
+  "appId": "it.nailsandmakeup.prenota",
+  "appName": "Nails & Makeup",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#3E1A3C"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css"
+    }
+  }
+}
