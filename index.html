@@ -1045,6 +1045,7 @@ async function lnOk(){
 function programmaPromemoria(){
  if(!LN)return;clearTimeout(lnT);
  lnT=setTimeout(async()=>{
+  if(admin||cliente)await lnOk(); // chiede il permesso appena si accede, anche senza promemoria da programmare
   const ora=Date.now(),L=[],oggi=iso(new Date());
   const alle=(data,giorniPrima,min)=>{const [y,m,d]=data.split('-').map(Number);return new Date(y,m-1,d-giorniPrima,0,min);};
   if(admin&&bOk){
@@ -1061,7 +1062,7 @@ function programmaPromemoria(){
   try{
    const p=await LN.getPending();
    if(p.notifications&&p.notifications.length)await LN.cancel({notifications:p.notifications.map(n=>({id:n.id}))});
-   if(!L.length||!await lnOk())return;
+   if(!L.length||!lnPerm)return;
    await LN.schedule({notifications:L.slice(0,60).map((x,i)=>({id:i+1,title:x.t,body:x.b,largeBody:x.b,schedule:{at:x.at,allowWhileIdle:true}}))});
   }catch(e){console.error('promemoria',e);}
  },800);
