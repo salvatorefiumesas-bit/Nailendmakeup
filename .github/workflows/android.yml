@@ -48,6 +48,12 @@ jobs:
             git push
           fi
 
+      - name: Impronte della firma (servono a Firebase per l'accesso con Google)
+        if: env.NM_KEY_PASSWORD != ''
+        run: |
+          keytool -list -v -keystore app-android/firma-app.p12 -storetype PKCS12 -storepass "$NM_KEY_PASSWORD" | grep -E "SHA1:|SHA256:" | tee impronte.txt
+          { echo "### Impronte della firma dell'app"; echo '```'; cat impronte.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Prepara l'app (copia il sito dentro l'app)
         working-directory: app-android
         run: |
