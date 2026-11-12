@@ -1023,14 +1023,49 @@ onAuthStateChanged(auth,async u=>{
  if(unsubB){unsubB();unsubB=null;}
  B=[];bOk=false;bSlow=false;
  if(unsubC){unsubC();unsubC=null;}MIE=[];mieOk=false;mieSlow=false;
- if(cliente)unsubC=onSnapshot(query(collection(db,'bookings'),where('uid','==',cliente.uid)),s=>{MIE=s.docs.map(d=>d.data());mieOk=true;renderMie();},()=>{mieOk=true;renderMie();});
- if(ok)unsubB=onSnapshot(collection(db,'bookings'),s=>{B=s.docs.map(d=>d.data());bOk=true;if(sp===null)renderLista();},()=>{bOk=true;if(sp===null)renderLista();});
+ if(cliente)unsubC=onSnapshot(query(collection(db,'bookings'),where('uid','==',cliente.uid)),s=>{MIE=s.docs.map(d=>d.data());mieOk=true;renderMie();programmaPromemoria();},()=>{mieOk=true;renderMie();});
+ if(ok)unsubB=onSnapshot(collection(db,'bookings'),s=>{B=s.docs.map(d=>d.data());bOk=true;if(sp===null)renderLista();programmaPromemoria();},()=>{bOk=true;if(sp===null)renderLista();});
  if(cliente)setTimeout(()=>{if(!mieOk){mieSlow=true;renderMie();}},8000);
  if(ok)setTimeout(()=>{if(!bOk){bSlow=true;renderLista();}},8000);
- aggiornaCliente();vista();
+ aggiornaCliente();vista();programmaPromemoria();
  pAuth=true;tryPronto();
 });
 $('hOrari').textContent=testoOrari();renderSv();vista();try{history.replaceState({nm:1},'');}catch(e){}
+/* Solo nell'app Android: promemoria programmati sul telefono (senza server).
+   Cliente: la sera prima alle 18:00 (o 2 ore prima, se ha prenotato dopo le 18 del giorno prima).
+   Titolare: la sera prima alle 20:00, riepilogo degli appuntamenti del giorno dopo.
+   Si riprogrammano ogni volta che arrivano dati nuovi (app aperta). */
+const LN=APP&&window.Capacitor.Plugins?window.Capacitor.Plugins.LocalNotifications:null;
+let lnPerm=null,lnT=null;
+async function lnOk(){
+ if(!LN)return false;if(lnPerm!==null)return lnPerm;
+ try{let p=await LN.checkPermissions();if(p.display!=='granted'&&p.display!=='denied')p=await LN.requestPermissions();lnPerm=p.display==='granted';}catch(e){lnPerm=false;}
+ return lnPerm;
+}
+function programmaPromemoria(){
+ if(!LN)return;clearTimeout(lnT);
+ lnT=setTimeout(async()=>{
+  const ora=Date.now(),L=[],oggi=iso(new Date());
+  const alle=(data,giorniPrima,min)=>{const [y,m,d]=data.split('-').map(Number);return new Date(y,m-1,d-giorniPrima,0,min);};
+  if(admin&&bOk){
+   const G={};B.forEach(b=>{if(!b.annullato&&b.data&&b.data>oggi)(G[b.data]=G[b.data]||[]).push(b);});
+   Object.keys(G).sort().forEach(d=>{const at=alle(d,1,20*60);if(at.getTime()<=ora)return;
+    const l=G[d].sort((a,b)=>a.ora-b.ora);
+    L.push({t:'Domani: '+l.length+(l.length===1?' appuntamento':' appuntamenti'),b:l.map(x=>hm(x.ora)+' '+x.nome+' '+x.cogn+' – '+x.sv).join('\n'),at});});
+  }else if(cliente&&mieOk){
+   MIE.forEach(b=>{if(b.annullato||!b.data||b.data<oggi)return;
+    let at=alle(b.data,1,18*60),t='Promemoria appuntamento',tx='Domani alle '+hm(b.ora)+': '+b.sv+'. Ti aspettiamo da Nails & Makeup!';
+    if(at.getTime()<=ora){at=alle(b.data,0,b.ora-120);t='Tra 2 ore il tuo appuntamento';tx='Alle '+hm(b.ora)+': '+b.sv+'. Ti aspettiamo da Nails & Makeup!';}
+    if(at.getTime()>ora)L.push({t,b:tx,at});});
+  }
+  try{
+   const p=await LN.getPending();
+   if(p.notifications&&p.notifications.length)await LN.cancel({notifications:p.notifications.map(n=>({id:n.id}))});
+   if(!L.length||!await lnOk())return;
+   await LN.schedule({notifications:L.slice(0,60).map((x,i)=>({id:i+1,title:x.t,body:x.b,largeBody:x.b,schedule:{at:x.at,allowWhileIdle:true}}))});
+  }catch(e){console.error('promemoria',e);}
+ },800);
+}
 /* Solo nell'app Android: tasto/gesto Indietro e avviso di nuova versione */
 if(APP){
  const AppNat=window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
