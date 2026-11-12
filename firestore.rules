@@ -10,6 +10,19 @@ service cloud.firestore {
     function pad(n) { return n < 10 ? '0' + string(n) : string(n); }
     function ymd(t) { return string(t.year()) + '-' + pad(t.month()) + '-' + pad(t.day()); }
 
+    // Giorni minimi per annullare online: dalle impostazioni del salone (2 se non impostato)
+    function ggAnnullo() {
+      return exists(/databases/$(database)/documents/config/salone)
+        ? get(/databases/$(database)/documents/config/salone).data.get('ggAnnullo', 2)
+        : 2;
+    }
+
+    // Impostazioni del salone (orari, chiusure, trattamenti, regole): tutti le leggono, solo la titolare le modifica
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Chi può entrare nell'area riservata: un documento admins/<UID>
     match /admins/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
@@ -48,7 +61,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annullato','annullatoIl','annullatoDa'])
         && request.resource.data.annullato == true
         && (!('data' in resource.data)
-          || resource.data.data >= ymd(request.time + duration.value(2, 'd'))));
+          || resource.data.data >= ymd(request.time + duration.value(ggAnnullo(), 'd'))));
       allow delete: if isAdmin();
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
