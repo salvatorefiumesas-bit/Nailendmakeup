@@ -1,37 +1,9 @@
-/* Service worker – Nails & Makeup
-   Strategia: rete per prima (così index.html è sempre l'ultima versione),
-   cache solo come riserva se manca la connessione.
-   Per forzare un aggiornamento in futuro basta cambiare VERSIONE. */
-const VERSIONE = 'nm-v4';
-
-self.addEventListener('install', e => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(chiavi => Promise.all(chiavi.filter(k => k !== VERSIONE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
+/* Nails & Makeup – service worker: rete per prima, cache solo se manca la connessione. Cambia VERSIONE per forzare l'aggiornamento. */
+const VERSIONE = 'nm-v5';
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== VERSIONE).map(x => caches.delete(x)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
-  const r = e.request;
-  if (r.method !== 'GET') return;
-  const u = new URL(r.url);
-  // Solo file del proprio sito: Firebase, Google, font ecc. passano diretti
-  if (u.origin !== self.location.origin) return;
-
-  e.respondWith(
-    fetch(r, { cache: 'no-cache' })
-      .then(res => {
-        if (res && res.ok) {
-          const copia = res.clone();
-          caches.open(VERSIONE).then(c => c.put(r, copia)).catch(() => {});
-        }
-        return res;
-      })
-      .catch(() => caches.match(r).then(x => x || caches.match('./index.html')))
-  );
+  const r = e.request; if (r.method !== 'GET' || new URL(r.url).origin !== self.location.origin) return;
+  e.respondWith(fetch(r, { cache: 'no-cache' }).then(res => { if (res && res.ok) { const c = res.clone(); caches.open(VERSIONE).then(x => x.put(r, c)); } return res; })
+    .catch(() => caches.match(r).then(x => x || caches.match('./index.html'))));
 });

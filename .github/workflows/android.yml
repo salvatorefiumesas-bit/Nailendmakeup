@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - '*.js'
       - 'manifest.webmanifest'
       - '*.png'
       - 'app-android/**'
@@ -75,7 +76,8 @@ jobs:
           path: NailsMakeup.apk
 
       - name: Pubblica l'APK firmato in Releases
-        if: env.NM_KEY_PASSWORD != ''
+        # solo dal ramo main: le prove su altri rami compilano ma non pubblicano
+        if: env.NM_KEY_PASSWORD != '' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: app-v1.${{ github.run_number }}
