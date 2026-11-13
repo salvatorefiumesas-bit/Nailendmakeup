@@ -267,7 +267,7 @@ window.RADICI_SEED.notifiche = {
   inattivi: { attivo: false, giorni: 45, testo: 'Ciao {{nome}}, è da un po’ che non ci vediamo! Prenota il tuo prossimo appuntamento da {{salone}}.' },
   silenzio: { da: '21:00', a: '08:30' },
   /* avviso alla titolare nel gestionale aperto, qualche minuto prima di ogni appuntamento */
-  titolare: { attivo: true, prima: 15 }
+  titolare: { avvisi: [{ attivo: true, prima: 1440 }, { attivo: true, prima: 60 }, { attivo: true, prima: 15 }] }
 };
 /* testo di una notifica con i segnaposto riempiti (serve all'anteprima della dashboard e, uguale, al server) */
 window.testoNotifica = (t, v) => String(t || '').replace(/\{\{(\w+)\}\}/g, (_, k) => v[k] !== undefined ? String(v[k]) : '');
