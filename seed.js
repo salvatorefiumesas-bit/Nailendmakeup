@@ -48,8 +48,8 @@ window.RADICI_SEED = {
     { id: 'gel2', cat: 'mani', nome: 'Copertura gel, con decori', prezzo: '', durata: 120, icona: 'smalto', descr: '' },
     { id: 'ric1', cat: 'mani', nome: 'Ricostruzione semplice', prezzo: '', durata: 120, icona: 'mani', descr: '' },
     { id: 'ric2', cat: 'mani', nome: 'Ricostruzione con nail art', prezzo: '', durata: 150, icona: 'mani', descr: '' },
-    { id: 'cer', cat: 'trucco', nome: 'Trucco cerimonia', prezzo: '', durata: 60, icona: 'pennello', descr: 'Per ogni tuo evento: cresime, matrimoni, serate.', richiesta: true },
-    { id: 'spo', cat: 'trucco', nome: 'Trucco sposa', prezzo: '', durata: 180, icona: 'pennello', descr: 'Il giorno più importante.', richiesta: true }
+    { id: 'cer', cat: 'trucco', nome: 'Trucco cerimonia', prezzo: '', durata: 60, icona: 'pennello', descr: 'Per ogni tuo evento: cresime, matrimoni, serate.', richiesta: true, annulloGiorni: 7 },
+    { id: 'spo', cat: 'trucco', nome: 'Trucco sposa', prezzo: '', durata: 180, icona: 'pennello', descr: 'Il giorno più importante.', richiesta: true, annulloGiorni: 7 }
   ].map(s => Object.assign({ visibile: true }, s))
 };
 /* Firestore non accetta liste dentro liste: le fasce orarie si salvano come {da, a} e si rileggono come [da, a] */

@@ -1,5 +1,5 @@
 /* Nails & Makeup – service worker: rete per prima, cache solo se manca la connessione. Cambia VERSIONE per forzare l'aggiornamento. */
-const VERSIONE = 'nm-v5';
+const VERSIONE = 'nm-v6';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== VERSIONE).map(x => caches.delete(x)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {

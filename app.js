@@ -361,16 +361,19 @@ function legaRichieste() {
 
 /* ---------- le mie prenotazioni ---------- */
 const attiva = b => b.stato !== 'annullata' && (b.data > oggi() || (b.data === oggi() && b.ini > oraMin()));
+/* quanto prima si può annullare: la regola generale, oppure quella del trattamento se è più lunga (es. trucchi: 7 giorni) */
+const limiteAnnullo = b => Math.max(C.regole.annulloMin || 0, ...(b.servizi || []).map(x => { const s = serv(x.id) || {}; const g = +s.annulloGiorni || (s.richiesta ? 7 : 0); return g * 1440; }));
 const minutiA = b => (new Date(b.data + 'T00:00').getTime() + b.ini * 60000 - Date.now()) / 60000;
 function renderMie() {
   $('mFut').style.opacity = storico ? .6 : 1; $('mSto').style.opacity = storico ? 1 : .6;
   if (!mieOk) { $('mList').innerHTML = '<div class="spin"></div>'; return; }
   const l = MIE.filter(b => storico ? !attiva(b) : attiva(b)).sort((a, b) => (a.data + p2(a.ini)).localeCompare(b.data + p2(b.ini)) * (storico ? -1 : 1));
   /* richieste (trucco sposa, cerimonia): quelle aperte e quelle a cui la titolare ha risposto da poco */
-  const da14 = Date.now() - 14 * 864e5, R = storico ? [] : RIC.filter(r => r.stato === 'nuova' || ((r.stato === 'fissata' || r.stato === 'rifiutata') && (r.rispostaIl || 0) > da14)).sort((a, b) => b.creata - a.creata);
-  const STQ = { nuova: ['In attesa di risposta', 'var(--gold)'], fissata: ['Appuntamento fissato', 'var(--ok)'], rifiutata: ['Non disponibile', 'var(--wait)'] };
+  const da14 = Date.now() - 14 * 864e5, stR = r => { const b = r.pren && MIE.find(x => x.id === r.pren); return r.stato === 'fissata' && b && b.stato === 'annullata' ? 'annullata' : r.stato; };
+  const R = storico ? [] : RIC.filter(r => stR(r) === 'nuova' || (['fissata', 'rifiutata'].includes(stR(r)) && (r.rispostaIl || 0) > da14) || (stR(r) === 'annullata' && r.annullataDa === 'salone' && (r.annullataIl || 0) > da14)).sort((a, b) => b.creata - a.creata);
+  const STQ = { nuova: ['In attesa di risposta', 'var(--gold)'], fissata: ['Appuntamento fissato', 'var(--ok)'], rifiutata: ['Non disponibile', 'var(--wait)'], annullata: ['Annullato dal salone', 'var(--wait)'] };
   const htmlR = R.map(r => `<div class="row rq"><b>${esc(r.servizio && r.servizio.nome || 'Richiesta')}</b><small>${r.dataEvento ? 'Per ' + esc(dataLunga(r.dataEvento)) + ' · ' : ''}inviata il ${new Date(r.creata).toLocaleDateString('it-IT')}</small>
-     <span class="rqst" style="color:${STQ[r.stato][1]}">● ${STQ[r.stato][0]}</span>${r.risposta ? `<small class="rqmsg">${esc(r.risposta)}</small>` : ''}${r.stato === 'nuova' ? `<button class="x" data-xq="${esc(r.id)}" aria-label="Annulla la richiesta">✕</button>` : ''}</div>`).join('');
+     <span class="rqst" style="color:${STQ[stR(r)][1]}">● ${STQ[stR(r)][0]}</span>${r.risposta ? `<small class="rqmsg">${esc(r.risposta)}</small>` : ''}${stR(r) === 'nuova' ? `<button class="x" data-xq="${esc(r.id)}" aria-label="Annulla la richiesta">✕</button>` : ''}</div>`).join('');
   if (!l.length) { $('mList').innerHTML = htmlR + `<p class="vuoto">${storico ? 'Nessuna prenotazione passata.' : 'Non hai prenotazioni in programma.'}</p>` + (storico ? '' : '<button class="cta" data-go="p1">Prenota ora</button>'); legaRichieste(); return; }
   $('mList').innerHTML = htmlR + l.map(b => { const d = new Date(b.data + 'T12:00'), st = C.staff.find(s => s.id === b.staff) || { nome: b.staffNome };
     return `<div class="bk${b.stato === 'annullata' ? ' ann' : ''}"><div class="dt"><i>${d.toLocaleDateString('it-IT', { month: 'short' })}</i><span>${d.toLocaleDateString('it-IT', { weekday: 'short' })}</span><b>${d.getDate()}</b><em>${hm(b.ini)}</em></div>
@@ -379,7 +382,8 @@ function renderMie() {
   legaRichieste();
   $('mList').querySelectorAll('[data-x]').forEach(k => k.onclick = async () => {
     const b = MIE.find(z => z.id === k.dataset.x); if (!b) return;
-    if (minutiA(b) < C.regole.annulloMin) { avvisa('Si può annullare dall’app fino a ' + fd(C.regole.annulloMin) + ' prima dell’appuntamento. Contatta il salone.'); return; }
+    const lim = limiteAnnullo(b);
+    if (minutiA(b) < lim) { avvisa('Si può annullare dall’app fino a ' + (lim % 1440 === 0 ? lim / 1440 + (lim === 1440 ? ' giorno' : ' giorni') : fd(lim)) + ' prima dell’appuntamento. Per annullarlo ora contatta ' + C.nome + '.'); return; }
     if (!await dialogo('Annullare la prenotazione?', dataLunga(b.data) + ' alle ' + hm(b.ini), 'Sì, annulla', 'No')) return;
     try { const w = writeBatch(db); w.update(doc(colP, b.id), { stato: 'annullata', annullataIl: Date.now(), annullataDa: 'cliente' }); w.delete(doc(colB, b.id)); await w.commit(); toast('Prenotazione annullata'); }
     catch (x) { avvisa('Non riesco ad annullare. Controlla la connessione e riprova.'); }
