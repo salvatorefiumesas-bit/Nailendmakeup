@@ -1,7 +1,7 @@
 {
   "id": "nails-makeup-prenota-app",
-  "name": "Nails & Makeup – Prenota",
-  "short_name": "Nails & Makeup",
+  "name": "R.P – Nails & Makeup",
+  "short_name": "R.P",
   "description": "Prenota online manicure e trucco.",
   "lang": "it",
   "start_url": "./?source=pwa",
