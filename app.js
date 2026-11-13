@@ -166,14 +166,16 @@ function adattaTesti() {
 }
 addEventListener('resize', () => { if (PAG === 'ph') { adattaTesti(); disegnaAlbero(); } });
 /* ---------- il marchio nello spazio libero sotto il menu: la pennellata si stende la prima volta, poi resta viva ---------- */
-let alberoFatto = false, alberoMis = '';
+let alberoFatto = false, alberoMis = '', alberoPiccolo = false;
 function disegnaAlbero() {
   const el = $('albero'); if (!el || PAG !== 'ph') return;
   const top = el.getBoundingClientRect().top + scrollY, W = Math.round(el.clientWidth), H = Math.min(460, Math.round(innerHeight - top - 14)), sotto = C.sottotitolo || '';
-  const mis = W + 'x' + H + sotto; if (mis === alberoMis) { nonSporgere(el); return; } alberoMis = mis;
-  if (H < 130 || W < 160) { el.innerHTML = ''; el.style.height = '0'; return; }
-  el.style.height = H + 'px';
-  if (!nonSporgere(el)) return;
+  const mis = W + 'x' + H + sotto; if (mis === alberoMis) { if (!alberoPiccolo) nonSporgere(el); return; } alberoMis = mis;
+  if (W < 160) { el.innerHTML = ''; el.style.height = '0'; return; }
+  /* schermo piccolo (es. iPhone SE): niente spazio sotto il menu → il logo va comunque sotto, a misura piena, e si vede scorrendo */
+  const piccolo = alberoPiccolo = H < 170; if (piccolo) { el.style.height = Math.min(300, W - 40) + 'px'; el.style.marginBottom = '0'; }
+  else el.style.marginBottom = '';
+  if (!piccolo) { el.style.height = H + 'px'; if (!nonSporgere(el)) return; }
   el.innerHTML = '<div class="marchio"></div>';
   window.radiciMarchio(el.firstChild, sotto, !alberoFatto && !document.getElementById('splash')); alberoFatto = true;
   el.firstChild.onclick = () => ricresci();
