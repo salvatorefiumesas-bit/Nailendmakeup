@@ -166,24 +166,28 @@ function adattaTesti() {
 }
 addEventListener('resize', () => { if (PAG === 'ph') { adattaTesti(); disegnaAlbero(); } });
 /* ---------- il marchio nello spazio libero sotto il menu: la pennellata si stende la prima volta, poi resta viva ---------- */
-let alberoFatto = false, alberoMis = '', alberoPiccolo = false;
+let alberoFatto = false, alberoMis = '';
 function disegnaAlbero() {
-  const el = $('albero'); if (!el || PAG !== 'ph') return;
-  const top = el.getBoundingClientRect().top + scrollY, W = Math.round(el.clientWidth), H = Math.min(460, Math.round(innerHeight - top - 14)), sotto = C.sottotitolo || '';
-  const mis = W + 'x' + H + sotto; if (mis === alberoMis) { if (!alberoPiccolo) nonSporgere(el); return; } alberoMis = mis;
-  if (W < 160) { el.innerHTML = ''; el.style.height = '0'; return; }
-  /* schermo piccolo (es. iPhone SE): niente spazio sotto il menu → il logo va comunque sotto, a misura piena, e si vede scorrendo */
-  const piccolo = alberoPiccolo = H < 170; if (piccolo) { el.style.height = Math.min(300, W - 40) + 'px'; el.style.marginBottom = '0'; }
-  else el.style.marginBottom = '';
-  if (!piccolo) { el.style.height = H + 'px'; if (!nonSporgere(el)) return; }
+  const el = $('albero'), cov = $('cover'); if (!el || PAG !== 'ph') return;
+  const spazio = () => Math.min(460, Math.round(innerHeight - (el.getBoundingClientRect().top + scrollY) - 14));
+  /* il logo si adatta allo spazio del telefono, senza far scorrere la pagina: se lo spazio è poco
+     abbasso prima un po' la copertina in alto (fino a 120 px), poi il logo si rimpicciolisce */
+  if (cov) cov.style.height = '';
+  let H = spazio();
+  if (cov && H < 180) { const h0 = cov.offsetHeight; cov.style.height = Math.max(120, h0 - (180 - H)) + 'px'; H = spazio(); }
+  const W = Math.round(el.clientWidth), sotto = C.sottotitolo || '', mis = W + 'x' + H + sotto;
+  el.style.marginBottom = '';
+  if (mis === alberoMis) { nonSporgere(el); return; } alberoMis = mis;
+  if (H < 60 || W < 160) { el.innerHTML = ''; el.style.height = '0'; return; }
+  el.style.height = H + 'px'; if (!nonSporgere(el)) return;
   el.innerHTML = '<div class="marchio"></div>';
   window.radiciMarchio(el.firstChild, sotto, !alberoFatto && !document.getElementById('splash')); alberoFatto = true;
   el.firstChild.onclick = () => ricresci();
 }
-/* se la pagina è più alta dello schermo (barre di sistema, margini) accorcio lo spazio della scritta, così la home non scorre */
+/* se la pagina è più alta dello schermo (barre di sistema, margini) accorcio lo spazio del logo, così la home non scorre */
 function nonSporgere(el) {
   const extra = document.documentElement.scrollHeight - innerHeight; if (extra <= 0) return true;
-  const h2 = el.offsetHeight - extra - 2; if (h2 < 130) { el.innerHTML = ''; el.style.height = '0'; alberoMis = ''; return false; }
+  const h2 = el.offsetHeight - extra - 2; if (h2 < 60) { el.innerHTML = ''; el.style.height = '0'; alberoMis = ''; return false; }
   el.style.height = h2 + 'px'; return true;
 }
 /* ogni tanto la pennellata si ridipinge da sola (ogni 40 secondi circa, solo con la home in vista); toccando la scritta subito */

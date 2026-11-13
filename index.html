@@ -35,7 +35,7 @@
 *,*::before,*::after{box-sizing:inherit}
 *{-webkit-tap-highlight-color:transparent}
 html{overflow-x:hidden;background:var(--bg)}
-body{margin:0;min-height:calc(100vh - var(--sat) - var(--sab));background:var(--bg);color:var(--ink);font:400 16px/1.5 "Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body{margin:0;min-height:calc(100vh - var(--sat) - var(--sab));min-height:calc(100dvh - var(--sat) - var(--sab));background:var(--bg);color:var(--ink);font:400 16px/1.5 "Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:"Fraunces",Georgia,serif;color:var(--head);font-weight:400;margin:0;letter-spacing:-.02em}
 button{font:inherit;color:inherit}
 button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
@@ -250,7 +250,7 @@ input:focus{outline:none;border-color:var(--acc)}
 .splogo.ricresci .p{animation:spP 1s cubic-bezier(.2,.8,.2,1) both}
 .splogo.ricresci .ra path{stroke-dasharray:1;stroke-dashoffset:1;opacity:1;animation:spDis .7s ease-out forwards;animation-delay:calc(var(--d) - .8s)}
 .splogo.ricresci .ra circle{animation:spSu .4s ease-out forwards;animation-delay:calc(var(--d) - .8s)}
-.albero .splogo{height:100%;max-width:100%;aspect-ratio:1;margin:0 auto;cursor:pointer}.albero .splogo svg{width:100%;height:100%;display:block}
+.albero .splogo{height:100%;width:auto;max-width:100%;aspect-ratio:1;margin:0 auto;cursor:pointer}.albero .splogo svg{width:100%;height:100%;display:block}
 .splogo.go .r{animation:spR .9s ease-out .15s forwards}
 .splogo.go .p{animation:spP 1s cubic-bezier(.2,.8,.2,1) .55s forwards}
 .splogo.go .ra path{stroke-dasharray:1;stroke-dashoffset:1;opacity:1;animation:spDis .7s ease-out forwards;animation-delay:var(--d)}
